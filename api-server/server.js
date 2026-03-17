@@ -6,14 +6,21 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const db = require('./config/database');
 
-// Import routes
-const authRoutes = require('./routes/auth');
-const adminRoutes = require('./routes/admin');
-const communityRoutes = require('./routes/community');
-const economicRoutes = require('./routes/economic');
-const ecosystemRoutes = require('./routes/ecosystem');
-const pollutionRoutes = require('./routes/pollution');
-const publicRoutes = require('./routes/public');
+// Import routes - organized by user group
+const authRoutes       = require('./routes/auth');
+
+// Admin routes
+const adminRoutes      = require('./routes/admin');
+
+// Community routes (requires authentication)
+const community        = require('./routes/community');
+const communityRoutes  = community.profile;
+const economicRoutes   = community.economic;
+const ecosystemRoutes  = community.ecosystem;
+const pollutionRoutes  = community.pollution;
+
+// Public routes (no authentication)
+const publicRoutes     = require('./routes/public').areas;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
