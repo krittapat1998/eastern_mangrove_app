@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../services/api_client.dart';
+import '../../../../services/api_client.dart';
 
 class CommunityAccountsScreen extends StatefulWidget {
   const CommunityAccountsScreen({super.key});

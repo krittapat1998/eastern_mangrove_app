@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../services/api_client.dart';
+import '../../../../services/api_client.dart';
 
 class RegistrationApprovalScreen extends StatefulWidget {
   const RegistrationApprovalScreen({super.key});

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../services/api_client.dart';
-import 'mangrove_management_screen.dart';
-import 'community_accounts_screen.dart';
-import 'registration_approval_screen.dart';
+import 'mangrove_management/mangrove_management_screen.dart';
+import 'community_management/community_accounts_screen.dart';
+import 'registration/registration_approval_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
