@@ -1,0 +1,749 @@
+import 'package:flutter/material.dart';
+import '../../services/api_client.dart';
+
+class CommunityProfileScreen extends StatefulWidget {
+  const CommunityProfileScreen({super.key});
+
+  @override
+  State<CommunityProfileScreen> createState() => _CommunityProfileScreenState();
+}
+
+class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
+  final ApiClient _apiClient = ApiClient();
+  final _formKey = GlobalKey<FormState>();
+  
+  bool _isLoading = true;
+  bool _isEditing = false;
+  String? _errorMessage;
+  Map<String, dynamic>? _profileData;
+
+  // Form Controllers - Basic Info
+  final _communityNameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  
+  // Location Info
+  final _provinceController = TextEditingController();
+  final _districtController = TextEditingController();
+  final _subDistrictController = TextEditingController();
+  final _villageNameController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _areaSizeController = TextEditingController();
+  
+  // Contact Info
+  final _contactPersonController = TextEditingController();
+  final _phoneNumberController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _websiteUrlController = TextEditingController();
+  final _socialMediaController = TextEditingController();
+  
+  // Community Info
+  final _establishedYearController = TextEditingController();
+  final _memberCountController = TextEditingController();
+  final _totalPopulationController = TextEditingController();
+  final _resourceDependentPopulationController = TextEditingController();
+  final _householdsController = TextEditingController();
+  final _mainOccupationController = TextEditingController();
+  final _mainReligionController = TextEditingController();
+  final _averageIncomeController = TextEditingController();
+  
+  // Mangrove Info
+  final _mangroveSpeciesController = TextEditingController();
+  final _conservationStatusController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  @override
+  void dispose() {
+    // Basic Info
+    _communityNameController.dispose();
+    _descriptionController.dispose();
+    // Location
+    _provinceController.dispose();
+    _districtController.dispose();
+    _subDistrictController.dispose();
+    _villageNameController.dispose();
+    _locationController.dispose();
+    _areaSizeController.dispose();
+    // Contact
+    _contactPersonController.dispose();
+    _phoneNumberController.dispose();
+    _emailController.dispose();
+    _websiteUrlController.dispose();
+    _socialMediaController.dispose();
+    // Community
+    _establishedYearController.dispose();
+    _memberCountController.dispose();
+    _totalPopulationController.dispose();
+    _resourceDependentPopulationController.dispose();
+    _householdsController.dispose();
+    _mainOccupationController.dispose();
+    _mainReligionController.dispose();
+    _averageIncomeController.dispose();
+    // Mangrove
+    _mangroveSpeciesController.dispose();
+    _conservationStatusController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadProfile() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final response = await _apiClient.getCommunityProfileData();
+      
+      if (response.success && response.data != null) {
+        final profile = response.data!;
+        final communityData = profile['community'] ?? profile;
+        
+        setState(() {
+          _profileData = communityData;
+          _populateForm(communityData);
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = response.message;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'เกิดข้อผิดพลาด: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _populateForm(Map<String, dynamic> data) {
+    // Basic Info
+    _communityNameController.text = data['name'] ?? '';
+    _descriptionController.text = data['description'] ?? '';
+    
+    // Location
+    _provinceController.text = data['province'] ?? '';
+    _districtController.text = data['district'] ?? '';
+    _subDistrictController.text = data['subDistrict'] ?? '';
+    _villageNameController.text = data['villageName'] ?? '';
+    _locationController.text = data['location'] ?? '';
+    _areaSizeController.text = data['areaSize']?.toString() ?? '';
+    
+    // Contact
+    _contactPersonController.text = data['contactPerson'] ?? '';
+    _phoneNumberController.text = data['phoneNumber'] ?? '';
+    _emailController.text = data['email'] ?? '';
+    _websiteUrlController.text = data['websiteUrl'] ?? '';
+    _socialMediaController.text = data['socialMedia'] ?? '';
+    
+    // Community
+    _establishedYearController.text = data['establishedYear']?.toString() ?? '';
+    _memberCountController.text = data['memberCount']?.toString() ?? '';
+    _totalPopulationController.text = data['totalPopulation']?.toString() ?? '';
+    _resourceDependentPopulationController.text = data['resourceDependentPopulation']?.toString() ?? '';
+    _householdsController.text = data['households']?.toString() ?? '';
+    _mainOccupationController.text = data['mainOccupation'] ?? '';
+    _mainReligionController.text = data['mainReligion'] ?? '';
+    _averageIncomeController.text = data['averageIncome']?.toString() ?? '';
+    
+    // Mangrove
+    _mangroveSpeciesController.text = data['mangroveSpecies'] ?? '';
+    _conservationStatusController.text = data['conservationStatus'] ?? '';
+  }
+
+  Future<void> _updateProfile() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final updateData = {
+        // Basic Info
+        'name': _communityNameController.text,
+        'description': _descriptionController.text,
+        
+        // Location
+        'province': _provinceController.text,
+        'district': _districtController.text,
+        'subDistrict': _subDistrictController.text,
+        'villageName': _villageNameController.text,
+        'location': _locationController.text,
+        'areaSize': double.tryParse(_areaSizeController.text),
+        
+        // Contact
+        'contactPerson': _contactPersonController.text,
+        'phoneNumber': _phoneNumberController.text,
+        'email': _emailController.text,
+        'websiteUrl': _websiteUrlController.text,
+        'socialMedia': _socialMediaController.text,
+        
+        // Community
+        'establishedYear': int.tryParse(_establishedYearController.text),
+        'memberCount': int.tryParse(_memberCountController.text),
+        'totalPopulation': int.tryParse(_totalPopulationController.text),
+        'resourceDependentPopulation': int.tryParse(_resourceDependentPopulationController.text),
+        'households': int.tryParse(_householdsController.text),
+        'mainOccupation': _mainOccupationController.text,
+        'mainReligion': _mainReligionController.text,
+        'averageIncome': double.tryParse(_averageIncomeController.text),
+        
+        // Mangrove
+        'mangroveSpecies': _mangroveSpeciesController.text,
+        'conservationStatus': _conservationStatusController.text,
+      };
+
+      print('🔄 Updating profile with data: $updateData');
+      final response = await _apiClient.updateCommunityProfile(updateData);
+      print('📡 Update response: success=${response.success}, message=${response.message}');
+      
+      if (response.success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('อัพเดตข้อมูลสำเร็จ'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+        setState(() {
+          _isEditing = false;
+        });
+        await _loadProfile();
+      } else {
+        print('❌ Update failed: ${response.message}');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.message),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('❌ Update error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('เกิดข้อผิดพลาด: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFAFAFA),
+      appBar: AppBar(
+        title: const Text('โปรไฟล์ชุมชน'),
+        backgroundColor: const Color(0xFF2E7D32),
+        foregroundColor: Colors.white,
+        actions: [
+          if (!_isEditing && !_isLoading)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                setState(() {
+                  _isEditing = true;
+                });
+              },
+              tooltip: 'แก้ไขข้อมูล',
+            )
+          else if (_isEditing)
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () {
+                setState(() {
+                  _isEditing = false;
+                  if (_profileData != null) {
+                    _populateForm(_profileData!);
+                  }
+                });
+              },
+              tooltip: 'ยกเลิก',
+            ),
+        ],
+      ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage!,
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _loadProfile,
+              icon: const Icon(Icons.refresh),
+              label: const Text('ลองใหม่'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2E7D32),
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _buildHeader(),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Section 1: Basic Info
+                  _buildSectionTitle('ข้อมูลพื้นฐาน', Icons.info),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _communityNameController,
+                    label: 'ชื่อชุมชน',
+                    icon: Icons.home,
+                    enabled: _isEditing,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'กรุณากรอกชื่อชุมชน';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _descriptionController,
+                    label: 'รายละเอียดชุมชน',
+                    icon: Icons.description,
+                    enabled: _isEditing,
+                    maxLines: 3,
+                  ),
+                  
+                  // Section 2: Location Info
+                  const SizedBox(height: 32),
+                  _buildSectionTitle('ข้อมูลที่ตั้ง', Icons.place),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _provinceController,
+                          label: 'จังหวัด',
+                          icon: Icons.location_city,
+                          enabled: _isEditing,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _districtController,
+                          label: 'อำเภอ',
+                          icon: Icons.location_on,
+                          enabled: _isEditing,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _subDistrictController,
+                          label: 'ตำบล',
+                          icon: Icons.my_location,
+                          enabled: _isEditing,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _villageNameController,
+                          label: 'ชื่อหมู่บ้าน',
+                          icon: Icons.home_work,
+                          enabled: _isEditing,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _locationController,
+                    label: 'ที่อยู่เต็ม',
+                    icon: Icons.place,
+                    enabled: _isEditing,
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _areaSizeController,
+                    label: 'ขนาดพื้นที่ (ไร่)',
+                    icon: Icons.landscape,
+                    enabled: _isEditing,
+                    keyboardType: TextInputType.number,
+                  ),
+                  
+                  // Section 3: Contact Info
+                  const SizedBox(height: 32),
+                  _buildSectionTitle('ข้อมูลติดต่อ', Icons.contact_page),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _contactPersonController,
+                    label: 'ผู้ติดต่อ',
+                    icon: Icons.person,
+                    enabled: _isEditing,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _phoneNumberController,
+                    label: 'เบอร์โทรศัพท์',
+                    icon: Icons.phone,
+                    enabled: _isEditing,
+                    keyboardType: TextInputType.phone,
+                    validator: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        if (!RegExp(r'^[0-9\-]+$').hasMatch(value)) {
+                          return 'กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง';
+                        }
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _emailController,
+                    label: 'อีเมล',
+                    icon: Icons.email,
+                    enabled: _isEditing,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                          return 'กรุณากรอกอีเมลที่ถูกต้อง';
+                        }
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _websiteUrlController,
+                    label: 'เว็บไซต์',
+                    icon: Icons.language,
+                    enabled: _isEditing,
+                    keyboardType: TextInputType.url,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _socialMediaController,
+                    label: 'โซเชียลมีเดีย (Facebook, Line, etc.)',
+                    icon: Icons.share,
+                    enabled: _isEditing,
+                    maxLines: 2,
+                  ),
+                  
+                  // Section 4: Community Info
+                  const SizedBox(height: 32),
+                  _buildSectionTitle('ข้อมูลชุมชน', Icons.people),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _establishedYearController,
+                          label: 'ปีที่ก่อตั้ง (พ.ศ.)',
+                          icon: Icons.calendar_today,
+                          enabled: _isEditing,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _memberCountController,
+                          label: 'จำนวนสมาชิก',
+                          icon: Icons.groups,
+                          enabled: _isEditing,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _totalPopulationController,
+                          label: 'จำนวนประชากรทั้งหมด',
+                          icon: Icons.people_alt,
+                          enabled: _isEditing,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _householdsController,
+                          label: 'จำนวนครัวเรือน',
+                          icon: Icons.house,
+                          enabled: _isEditing,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _resourceDependentPopulationController,
+                    label: 'ประชากรที่พึ่งพาทรัพยากร',
+                    icon: Icons.nature_people,
+                    enabled: _isEditing,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _mainOccupationController,
+                          label: 'อาชีพหลัก',
+                          icon: Icons.work,
+                          enabled: _isEditing,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _mainReligionController,
+                          label: 'ศาสนาหลัก',
+                          icon: Icons.temple_buddhist,
+                          enabled: _isEditing,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _averageIncomeController,
+                    label: 'รายได้เฉลี่ย (บาท/เดือน)',
+                    icon: Icons.attach_money,
+                    enabled: _isEditing,
+                    keyboardType: TextInputType.number,
+                  ),
+                  
+                  // Section 5: Mangrove Info
+                  const SizedBox(height: 32),
+                  _buildSectionTitle('ข้อมูลป่าชายเลน', Icons.eco),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _mangroveSpeciesController,
+                    label: 'ชนิดพันธุ์ไม้ป่าชายเลน',
+                    icon: Icons.forest,
+                    enabled: _isEditing,
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _conservationStatusController,
+                    label: 'สถานะการอนุรักษ์',
+                    icon: Icons.park,
+                    enabled: _isEditing,
+                    maxLines: 2,
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  if (_isEditing)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _updateProfile,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2E7D32),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'บันทึกการเปลี่ยนแปลง',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.green.shade700, Colors.green.shade500],
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.account_circle,
+              size: 60,
+              color: Colors.green.shade700,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _communityNameController.text.isNotEmpty
+                ? _communityNameController.text
+                : 'ชุมชน',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (_locationController.text.isNotEmpty)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.place, color: Colors.white70, size: 16),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    _locationController.text,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.white70,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, color: const Color(0xFF2E7D32), size: 24),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2E7D32),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    required bool enabled,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      enabled: enabled,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: enabled ? const Color(0xFF2E7D32) : Colors.grey),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: enabled ? const Color(0xFF2E7D32) : Colors.grey.shade300,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        filled: true,
+        fillColor: enabled ? Colors.white : Colors.grey.shade100,
+      ),
+      style: TextStyle(
+        color: enabled ? Colors.black87 : Colors.grey.shade600,
+      ),
+    );
+  }
+}

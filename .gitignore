@@ -1,0 +1,32 @@
+# Flutter
+eastern_mangrove_app/.dart_tool/
+eastern_mangrove_app/.flutter-plugins
+eastern_mangrove_app/.flutter-plugins-dependencies
+eastern_mangrove_app/.packages
+eastern_mangrove_app/build/
+eastern_mangrove_app/ios/Pods/
+eastern_mangrove_app/ios/.symlinks/
+eastern_mangrove_app/ios/Flutter/Flutter.framework
+eastern_mangrove_app/ios/Flutter/Flutter.podspec
+eastern_mangrove_app/*.iml
+eastern_mangrove_app/.idea/
+eastern_mangrove_app/.vscode/
+
+# Node.js
+api-server/node_modules/
+api-server/package-lock.json
+api-server/*.log
+
+# Environment variables
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Database
+*.db
+*.sqlite
