@@ -39,6 +39,12 @@ const authenticateToken = async (req, res, next) => {
     next();
   } catch (error) {
     console.error('Token verification error:', error);
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        error: 'Token expired',
+        message: 'Token หมดอายุ กรุณา Login ใหม่'
+      });
+    }
     return res.status(403).json({
       error: 'Invalid token',
       message: 'Token verification failed'

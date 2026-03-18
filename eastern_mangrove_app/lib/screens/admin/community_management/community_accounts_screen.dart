@@ -1072,17 +1072,21 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
                   if (!checkResponse.success) {
                     // API error - show alert
                     if (mounted) {
+                      final errMsg = checkResponse.error ?? '';
+                      final isTokenError = errMsg.contains('Token') || errMsg.contains('token') || errMsg.contains('Unauthorized') || errMsg.contains('expired') || errMsg.contains('login');
                       showDialog(
                         context: context,
                         builder: (ctx) => AlertDialog(
-                          title: const Row(
+                          title: Row(
                             children: [
-                              Icon(Icons.error_outline, color: Colors.red),
-                              SizedBox(width: 8),
-                              Text('เกิดข้อผิดพลาด'),
+                              Icon(isTokenError ? Icons.lock_outline : Icons.error_outline, color: isTokenError ? Colors.orange : Colors.red),
+                              const SizedBox(width: 8),
+                              Text(isTokenError ? 'Session หมดอายุ' : 'เกิดข้อผิดพลาด'),
                             ],
                           ),
-                          content: Text(checkResponse.error ?? 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล'),
+                          content: Text(isTokenError
+                              ? 'กรุณา Logout แล้ว Login ใหม่\n(Session หมดอายุ)'
+                              : (checkResponse.error ?? 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล')),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(ctx),

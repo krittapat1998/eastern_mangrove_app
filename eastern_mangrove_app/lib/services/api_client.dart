@@ -16,7 +16,7 @@ class ApiClient {
     // For iOS/Android real device - use Mac IP
     // To find your Mac IP: ifconfig | grep "inet " | grep -v 127.0.0.1
     if (Platform.isIOS || Platform.isAndroid) {
-      return 'http://192.168.1.38:3002/api';
+      return 'http://192.168.1.42:3002/api';
     }
     
     // Fallback to localhost

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../../services/api_client.dart';
+import '../../services/api_client.dart';
 
 class MangroveManagementScreen extends StatefulWidget {
   const MangroveManagementScreen({super.key});
