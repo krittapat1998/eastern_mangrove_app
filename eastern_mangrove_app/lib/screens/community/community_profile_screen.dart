@@ -53,7 +53,9 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadProfile();
+    });
   }
 
   @override
@@ -122,24 +124,31 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
   }
 
   void _populateForm(Map<String, dynamic> data) {
+    // Helper to safely convert any value (including List) to String
+    String safeString(dynamic value) {
+      if (value == null) return '';
+      if (value is List) return value.join(', ');
+      return value.toString();
+    }
+
     // Basic Info
-    _communityNameController.text = data['name'] ?? '';
-    _descriptionController.text = data['description'] ?? '';
+    _communityNameController.text = safeString(data['name']);
+    _descriptionController.text = safeString(data['description']);
     
     // Location
-    _provinceController.text = data['province'] ?? '';
-    _districtController.text = data['district'] ?? '';
-    _subDistrictController.text = data['subDistrict'] ?? '';
-    _villageNameController.text = data['villageName'] ?? '';
-    _locationController.text = data['location'] ?? '';
+    _provinceController.text = safeString(data['province']);
+    _districtController.text = safeString(data['district']);
+    _subDistrictController.text = safeString(data['subDistrict']);
+    _villageNameController.text = safeString(data['villageName']);
+    _locationController.text = safeString(data['location']);
     _areaSizeController.text = data['areaSize']?.toString() ?? '';
     
     // Contact
-    _contactPersonController.text = data['contactPerson'] ?? '';
-    _phoneNumberController.text = data['phoneNumber'] ?? '';
-    _emailController.text = data['email'] ?? '';
-    _websiteUrlController.text = data['websiteUrl'] ?? '';
-    _socialMediaController.text = data['socialMedia'] ?? '';
+    _contactPersonController.text = safeString(data['contactPerson']);
+    _phoneNumberController.text = safeString(data['phoneNumber']);
+    _emailController.text = safeString(data['email']);
+    _websiteUrlController.text = safeString(data['websiteUrl']);
+    _socialMediaController.text = safeString(data['socialMedia']);
     
     // Community
     _establishedYearController.text = data['establishedYear']?.toString() ?? '';
@@ -147,13 +156,13 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
     _totalPopulationController.text = data['totalPopulation']?.toString() ?? '';
     _resourceDependentPopulationController.text = data['resourceDependentPopulation']?.toString() ?? '';
     _householdsController.text = data['households']?.toString() ?? '';
-    _mainOccupationController.text = data['mainOccupation'] ?? '';
-    _mainReligionController.text = data['mainReligion'] ?? '';
+    _mainOccupationController.text = safeString(data['mainOccupation']);
+    _mainReligionController.text = safeString(data['mainReligion']);
     _averageIncomeController.text = data['averageIncome']?.toString() ?? '';
     
     // Mangrove
-    _mangroveSpeciesController.text = data['mangroveSpecies'] ?? '';
-    _conservationStatusController.text = data['conservationStatus'] ?? '';
+    _mangroveSpeciesController.text = safeString(data['mangroveSpecies']);
+    _conservationStatusController.text = safeString(data['conservationStatus']);
   }
 
   Future<void> _updateProfile() async {
@@ -203,7 +212,7 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
 
       print('🔄 Updating profile with data: $updateData');
       final response = await _apiClient.updateCommunityProfile(updateData);
-      print('📡 Update response: success=${response.success}, message=${response.message}');
+      print('📡 Update response: success=${response.success}, error=${response.error}');
       
       if (response.success) {
         if (mounted) {
@@ -219,11 +228,12 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
         });
         await _loadProfile();
       } else {
-        print('❌ Update failed: ${response.message}');
+        final errMsg = response.error ?? 'เกิดข้อผิดพลาด กรุณาลองใหม่';
+        print('❌ Update failed: $errMsg');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response.message),
+              content: Text(errMsg),
               backgroundColor: Colors.red,
             ),
           );

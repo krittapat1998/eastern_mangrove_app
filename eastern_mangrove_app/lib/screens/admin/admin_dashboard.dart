@@ -3,6 +3,7 @@ import '../../services/api_client.dart';
 import 'mangrove_management/mangrove_management_screen.dart';
 import 'community_management/community_accounts_screen.dart';
 import 'registration/registration_approval_screen.dart';
+import 'admin_profile_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -95,6 +96,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
             onSelected: (value) {
               if (value == 'logout') {
                 _logout();
+              } else if (value == 'profile') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminProfileScreen()),
+                );
               }
             },
           ),
@@ -180,10 +186,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             const SizedBox(width: 16),
                             Expanded(
                               child: _buildStatCard(
-                                'รออนุมัติ',
-                                '${_getStat('communities.pending')}',
-                                Icons.pending_actions,
-                                const Color(0xFF4CAF50),
+                                'พื้นที่ป่าทั้งหมด',
+                                '${_getStat('mangroveAreas.total')}',
+                                Icons.eco,
+                                const Color(0xFF388E3C),
                               ),
                             ),
                           ],
@@ -191,26 +197,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                         const SizedBox(height: 16),
 
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildStatCard(
-                                'อนุมัติแล้ว',
-                                '${_getStat('communities.approved')}',
-                                Icons.check_circle,
-                                const Color(0xFF2E7D32),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildStatCard(
-                                'รายงานมลพิษ',
-                                '${_getStat('pollutionReports.total')}',
-                                Icons.warning,
-                                Colors.orange,
-                              ),
-                            ),
-                          ],
+                        SizedBox(
+                          width: double.infinity,
+                          child: _buildStatCard(
+                            'รายงานมลพิษ',
+                            '${_getStat('pollutionReports.total')}',
+                            Icons.warning,
+                            Colors.orange,
+                          ),
                         ),
 
                         const SizedBox(height: 32),

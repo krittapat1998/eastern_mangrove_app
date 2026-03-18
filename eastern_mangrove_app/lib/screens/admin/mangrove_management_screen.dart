@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../services/api_client.dart';
 
 class MangroveManagementScreen extends StatefulWidget {
@@ -717,6 +718,23 @@ class _MangroveManagementScreenState extends State<MangroveManagementScreen>
           ),
         ),
         actions: [
+          if (area['latitude'] != null && area['longitude'] != null)
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                _openInGoogleMaps(
+                  area['latitude'],
+                  area['longitude'],
+                  area['area_name'] ?? 'พื้นที่ป่าชายเลน',
+                );
+              },
+              icon: const Icon(Icons.navigation),
+              label: const Text('นำทาง'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+              ),
+            ),
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('ปิด'),
@@ -736,6 +754,51 @@ class _MangroveManagementScreenState extends State<MangroveManagementScreen>
         ],
       ),
     );
+  }
+
+  Future<void> _openInGoogleMaps(dynamic lat, dynamic lon, String label) async {
+    if (lat == null || lon == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⚠️ ไม่พบข้อมูลตำแหน่ง'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    final double latitude = (lat is num) ? lat.toDouble() : double.parse(lat.toString());
+    final double longitude = (lon is num) ? lon.toDouble() : double.parse(lon.toString());
+
+    final String googleMapsUrl =
+        'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude&travelmode=driving';
+    final String googleMapsAppUrl =
+        'geo:$latitude,$longitude?q=$latitude,$longitude($label)';
+
+    try {
+      final Uri geoUri = Uri.parse(googleMapsAppUrl);
+      if (await canLaunchUrl(geoUri)) {
+        await launchUrl(geoUri, mode: LaunchMode.externalApplication);
+      } else {
+        final Uri webUri = Uri.parse(googleMapsUrl);
+        if (await canLaunchUrl(webUri)) {
+          await launchUrl(webUri, mode: LaunchMode.externalApplication);
+        } else {
+          throw 'ไม่สามารถเปิด Google Maps ได้';
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('ไม่สามารถเปิด Google Maps: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildDetailRow(String label, String value) {
@@ -1452,6 +1515,36 @@ class _MangroveManagementScreenState extends State<MangroveManagementScreen>
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.example.eastern_mangrove_app',
             ),
+            // User location marker
+            if (_currentPosition != null)
+              MarkerLayer(
+                markers: [
+                  Marker(
+                    point: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+                    width: 50,
+                    height: 50,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade600,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 3),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.person_pin_circle,
+                        color: Colors.white,
+                        size: 30,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             if (areasWithLocation.isNotEmpty)
               MarkerLayer(
                 markers: areasWithLocation.map((area) {

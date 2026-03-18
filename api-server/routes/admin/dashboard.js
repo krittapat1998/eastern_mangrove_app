@@ -31,6 +31,11 @@ router.get('/dashboard/stats', async (req, res) => {
       WHERE created_at >= NOW() - INTERVAL '30 days'
     `);
 
+    // Get total mangrove areas
+    const mangroveStats = await db.query(`
+      SELECT COUNT(*) as count FROM mangrove_areas
+    `);
+
     // Get total pollution reports
     const pollutionStats = await db.query(`
       SELECT 
@@ -55,6 +60,9 @@ router.get('/dashboard/stats', async (req, res) => {
         byType: {}
       },
       recentRegistrations: parseInt(recentRegistrations.rows[0]?.count || 0),
+      mangroveAreas: {
+        total: parseInt(mangroveStats.rows[0]?.count || 0)
+      },
       pollutionReports: {
         total: 0,
         byStatus: {}

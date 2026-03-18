@@ -61,10 +61,13 @@ class _QuarterlyReportScreenState extends State<QuarterlyReportScreen> with Sing
       case 'activity':
         return 'กิจกรรม';
       case 'provision':
+      case 'provisioning':
         return 'การจัดหา';
       case 'regulation':
+      case 'regulating':
         return 'การควบคุม';
       case 'culture':
+      case 'cultural':
         return 'วัฒนธรรม';
       default:
         return category;
@@ -85,8 +88,12 @@ class _QuarterlyReportScreenState extends State<QuarterlyReportScreen> with Sing
         return 'กุ้ง';
       case 'wood':
         return 'ไม้';
+      case 'firewood':
+        return 'ไม้ฟืน';
       case 'medicinal_plants':
         return 'พืชสมุนไพร';
+      case 'other_resource':
+        return 'ทรัพยากรอื่นๆ';
       case 'tour_guide':
         return 'ไกด์นำเที่ยว';
       case 'homestay':
@@ -95,8 +102,24 @@ class _QuarterlyReportScreenState extends State<QuarterlyReportScreen> with Sing
         return 'การสัมมนา';
       case 'workshop':
         return 'การอบรม';
+      case 'learning_camp':
+        return 'ค่ายการเรียนรู้';
       case 'other_activity':
         return 'กิจกรรมอื่นๆ';
+      case 'ecotourism':
+        return 'ท่องเที่ยวเชิงนิเวศ';
+      case 'education':
+        return 'การศึกษา';
+      case 'provisioning':
+        return 'การจัดหาทรัพยากร';
+      case 'regulating':
+        return 'การควบคุมสภาพแวดล้อม';
+      case 'cultural':
+        return 'วัฒนธรรม';
+      case 'recreation':
+        return 'นันทนาการ';
+      case 'other':
+        return 'อื่นๆ';
       default:
         return serviceType;
     }

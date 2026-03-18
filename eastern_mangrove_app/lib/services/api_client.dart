@@ -202,6 +202,7 @@ class ApiClient {
 
   // Get user profile
   Future<ApiResponse<Map<String, dynamic>>> getUserProfile() async {
+    await _ensureTokenLoaded();
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/auth/profile'),
@@ -214,6 +215,46 @@ class ApiClient {
       } else {
         final data = json.decode(response.body);
         return ApiResponse.error(data['message'] ?? data['error'] ?? 'Failed to fetch profile');
+      }
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Update user profile
+  Future<ApiResponse<Map<String, dynamic>>> updateUserProfile(Map<String, dynamic> profileData) async {
+    await _ensureTokenLoaded();
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/auth/profile'),
+        headers: _headers,
+        body: json.encode(profileData),
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200) {
+        return ApiResponse.success(data['data'], data['message'] ?? 'Profile updated');
+      } else {
+        return ApiResponse.error(data['message'] ?? 'Failed to update profile');
+      }
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Change password
+  Future<ApiResponse<bool>> changePassword(String currentPassword, String newPassword) async {
+    await _ensureTokenLoaded();
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/change-password'),
+        headers: _headers,
+        body: json.encode({'currentPassword': currentPassword, 'newPassword': newPassword}),
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200) {
+        return ApiResponse.success(true, data['message'] ?? 'Password changed');
+      } else {
+        return ApiResponse.error(data['message'] ?? 'Failed to change password');
       }
     } catch (e) {
       return _handleError(e);
@@ -308,12 +349,20 @@ class ApiClient {
         body: json.encode(profileData),
       );
 
+      print('🌐 updateCommunityProfile status: ${response.statusCode}');
+      print('🌐 updateCommunityProfile body: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return ApiResponse.success(data['data'], data['message'] ?? 'Profile updated');
       } else {
         final data = json.decode(response.body);
-        return ApiResponse.error(data['message'] ?? 'Failed to update profile');
+        final msg = (data['message']?.toString().isNotEmpty == true)
+            ? data['message'].toString()
+            : (data['error']?.toString().isNotEmpty == true)
+                ? data['error'].toString()
+                : 'เกิดข้อผิดพลาด (${response.statusCode})';
+        return ApiResponse.error(msg);
       }
     } catch (e) {
       return _handleError(e);

@@ -39,6 +39,7 @@ class _CommunityDashboardState extends State<CommunityDashboard> {
   }
 
   Future<void> _loadDashboardData() async {
+    _recentActivities = [];
     print('🏠 Dashboard: Starting to load data...');
     try {
       // Fetch community profile (using ProfileData for raw Map)
@@ -270,17 +271,27 @@ class _CommunityDashboardState extends State<CommunityDashboard> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF2E7D32),
-              ),
-            )
-          : SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: RefreshIndicator(
+          onRefresh: _loadDashboardData,
+          color: const Color(0xFF2E7D32),
+          child: _isLoading
+              ? const SingleChildScrollView(
+                  physics: AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height: 400,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF2E7D32),
+                      ),
+                    ),
+                  ),
+                )
+              : SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Status Banner (Rejected or Pending)
             if (_registrationStatus == 'rejected')
               Container(
@@ -672,6 +683,7 @@ class _CommunityDashboardState extends State<CommunityDashboard> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

@@ -137,9 +137,20 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
     } = req.body;
 
     // Convert empty strings to null for JSON/array fields
-    const sanitizedOccupations = occupations && occupations !== '' ? occupations : null;
-    const sanitizedSocialMedia = socialMedia && socialMedia !== '' ? socialMedia : null;
-    const sanitizedMangroveSpecies = mangroveSpecies && mangroveSpecies !== '' ? mangroveSpecies : null;
+    // Also normalize string input back to array (Flutter joins arrays to comma-separated strings)
+    function normalizeArrayField(value) {
+      if (value === null || value === undefined || value === '') return null;
+      if (Array.isArray(value)) return value.length > 0 ? value : null;
+      if (typeof value === 'string') {
+        const items = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        return items.length > 0 ? items : null;
+      }
+      return null;
+    }
+
+    const sanitizedOccupations = normalizeArrayField(occupations);
+    const sanitizedSocialMedia = normalizeArrayField(socialMedia);
+    const sanitizedMangroveSpecies = normalizeArrayField(mangroveSpecies);
 
     // Find community
     const communityResult = await db.query(

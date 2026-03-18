@@ -302,6 +302,94 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
   }
 });
 
+// Update user profile
+router.put('/profile', authenticateToken, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { firstName, lastName, phoneNumber, email } = req.body;
+
+    if (!firstName && !lastName && !phoneNumber && !email) {
+      return res.status(400).json({ success: false, message: 'ไม่มีข้อมูลที่ต้องการอัปเดต' });
+    }
+
+    // Build dynamic update
+    const fields = [];
+    const values = [];
+    let idx = 1;
+
+    if (firstName !== undefined) { fields.push(`first_name = $${idx++}`); values.push(firstName); }
+    if (lastName !== undefined)  { fields.push(`last_name = $${idx++}`);  values.push(lastName); }
+    if (phoneNumber !== undefined){ fields.push(`phone_number = $${idx++}`);values.push(phoneNumber); }
+    if (email !== undefined) {
+      // Check email not taken by someone else
+      const emailCheck = await db.query('SELECT id FROM users WHERE email = $1 AND id != $2', [email, userId]);
+      if (emailCheck.rows.length > 0) {
+        return res.status(400).json({ success: false, message: 'อีเมลนี้ถูกใช้งานแล้ว' });
+      }
+      fields.push(`email = $${idx++}`);
+      values.push(email);
+    }
+
+    fields.push(`updated_at = NOW()`);
+    values.push(userId);
+
+    const result = await db.query(
+      `UPDATE users SET ${fields.join(', ')} WHERE id = $${idx} RETURNING id, email, first_name, last_name, phone_number, user_type`,
+      values
+    );
+
+    const u = result.rows[0];
+    res.json({
+      success: true,
+      message: 'อัปเดตโปรไฟล์สำเร็จ',
+      data: {
+        user: {
+          id: u.id,
+          email: u.email,
+          firstName: u.first_name,
+          lastName: u.last_name,
+          phoneNumber: u.phone_number,
+          userType: u.user_type
+        }
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Change password
+router.post('/change-password', authenticateToken, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'กรุณากรอกรหัสผ่านปัจจุบันและรหัสผ่านใหม่' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร' });
+    }
+
+    const result = await db.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'ไม่พบผู้ใช้งาน' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, result.rows[0].password_hash);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'รหัสผ่านปัจจุบันไม่ถูกต้อง' });
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 12);
+    await db.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [newHash, userId]);
+
+    res.json({ success: true, message: 'เปลี่ยนรหัสผ่านสำเร็จ' });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Verify token endpoint
 router.get('/verify-token', authenticateToken, (req, res) => {
   res.status(200).json({
