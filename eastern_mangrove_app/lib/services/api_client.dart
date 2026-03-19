@@ -867,6 +867,52 @@ class ApiClient {
     }
   }
 
+  Future<ApiResponse<List<Map<String, dynamic>>>> getPublicServiceSummary() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/public/service-summary'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List<dynamic> list = data['data'];
+        return ApiResponse.success(
+          List<Map<String, dynamic>>.from(list),
+          data['message'] ?? 'Success',
+        );
+      } else {
+        final data = json.decode(response.body);
+        return ApiResponse.error(data['message'] ?? 'Failed to fetch service summary');
+      }
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<ApiResponse<List<Map<String, dynamic>>>> getPublicServiceBreakdown() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/public/service-breakdown'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List<dynamic> list = data['data'];
+        return ApiResponse.success(
+          List<Map<String, dynamic>>.from(list),
+          data['message'] ?? 'Success',
+        );
+      } else {
+        final data = json.decode(response.body);
+        return ApiResponse.error(data['message'] ?? 'Failed to fetch service breakdown');
+      }
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
   // Economic Data methods
   Future<ApiResponse<List<Map<String, dynamic>>>> getEconomicDataNew() async {
     await _ensureTokenLoaded();

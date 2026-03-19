@@ -120,23 +120,22 @@ router.get('/statistics', async (req, res, next) => {
   }
 });
 
-// Get service summary for public (12 months data)
+// Get service summary for public (12 months data - all service types)
 router.get('/service-summary', async (req, res, next) => {
   try {
     const result = await db.query(`
       SELECT 
-        TO_CHAR(DATE_TRUNC('month', CONCAT(year, '-', month, '-01')::DATE), 'Mon YYYY') as month_label,
         year,
         month,
         SUM(beneficiaries_count) as total_visitors,
         SUM(economic_value) as total_revenue,
-        COUNT(*) as service_count
+        COUNT(*) as service_count,
+        COUNT(DISTINCT community_id) as active_communities
       FROM ecosystem_services
-      WHERE service_type IN ('ecotourism', 'education', 'recreation')
-        AND CONCAT(year, '-', month, '-01')::DATE >= DATE_TRUNC('month', NOW() - INTERVAL '12 months')
+      WHERE MAKE_DATE(year, month, 1) >= DATE_TRUNC('month', NOW() - INTERVAL '11 months')
+        AND MAKE_DATE(year, month, 1) <= DATE_TRUNC('month', NOW())
       GROUP BY year, month
-      ORDER BY year DESC, month DESC
-      LIMIT 12
+      ORDER BY year ASC, month ASC
     `);
 
     res.status(200).json({
@@ -147,6 +146,36 @@ router.get('/service-summary', async (req, res, next) => {
 
   } catch (error) {
     console.error('❌ Get service summary error:', error);
+    next(error);
+  }
+});
+
+// Get service breakdown by type per month (12 months)
+router.get('/service-breakdown', async (req, res, next) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        year,
+        month,
+        service_type,
+        SUM(beneficiaries_count) as visitors,
+        SUM(economic_value) as revenue,
+        COUNT(*) as count
+      FROM ecosystem_services
+      WHERE MAKE_DATE(year, month, 1) >= DATE_TRUNC('month', NOW() - INTERVAL '11 months')
+        AND MAKE_DATE(year, month, 1) <= DATE_TRUNC('month', NOW())
+      GROUP BY year, month, service_type
+      ORDER BY year ASC, month ASC, revenue DESC
+    `);
+
+    res.status(200).json({
+      success: true,
+      message: 'ดึงข้อมูลรายละเอียดบริการสำเร็จ',
+      data: result.rows
+    });
+
+  } catch (error) {
+    console.error('❌ Get service breakdown error:', error);
     next(error);
   }
 });

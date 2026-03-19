@@ -164,38 +164,60 @@ void showMangroveAreaDetailsDialog(
         ),
       ),
       actions: [
-        if (area['latitude'] != null && area['longitude'] != null)
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              openMangroveInGoogleMaps(
-                context,
-                area['latitude'],
-                area['longitude'],
-                area['area_name'] ?? 'พื้นที่ป่าชายเลน',
-              );
-            },
-            icon: const Icon(Icons.navigation),
-            label: const Text('นำทาง'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue.shade700,
-              foregroundColor: Colors.white,
-            ),
-          ),
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext),
-          child: const Text('ปิด'),
-        ),
-        ElevatedButton.icon(
-          onPressed: () {
-            Navigator.pop(dialogContext);
-            onEdit(area);
-          },
-          icon: const Icon(Icons.edit),
-          label: const Text('แก้ไข'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2E7D32),
-            foregroundColor: Colors.white,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (area['latitude'] != null &&
+                  area['longitude'] != null) ...[
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    openMangroveInGoogleMaps(
+                      context,
+                      area['latitude'],
+                      area['longitude'],
+                      area['area_name'] ?? 'พื้นที่ป่าชายเลน',
+                    );
+                  },
+                  icon: const Icon(Icons.navigation, size: 18),
+                  label: const Text('นำทาง'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade700,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 44),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: const Text('ปิด'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                        onEdit(area);
+                      },
+                      icon: const Icon(Icons.edit, size: 18),
+                      label: const Text('แก้ไข'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2E7D32),
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ],
