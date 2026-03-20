@@ -256,10 +256,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Back Button
                 TextButton.icon(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  icon: const Icon(Icons.arrow_back, color: Colors.green),
                   label: const Text(
                     'กลับหน้าหลัก',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    style: TextStyle(color: Colors.green, fontSize: 16),
                   ),
                 ),
               ],
