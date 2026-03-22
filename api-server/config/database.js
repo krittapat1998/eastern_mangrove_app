@@ -25,6 +25,8 @@ const pool = new Pool(poolConfig);
 
 // Event listeners for pool
 pool.on('connect', (client) => {
+  // Set default schema so all queries find eastern_mangrove_communities tables
+  client.query('SET search_path TO eastern_mangrove_communities, public');
   console.log('🔗 New PostgreSQL client connected');
 });
 
