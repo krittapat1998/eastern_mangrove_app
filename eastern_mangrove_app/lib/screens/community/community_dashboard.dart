@@ -554,22 +554,22 @@ class _CommunityDashboardState extends State<CommunityDashboard> {
             
             _buildFunctionCard(
               context,
-              icon: Icons.assessment,
-              title: 'รายงานรายไตรมาส',
-              subtitle: 'สรุปมูลค่าเศรษฐกิจและบริการนิเวศรายไตรมาส',
-              color: Colors.teal,
-              onTap: () => _navigateToQuarterlyIncome(),
+              icon: Icons.eco,
+              title: 'จัดการข้อมูลบริการทางนิเวศ',
+              subtitle: 'ทรัพยากรที่ใช้ประโยชน์, การท่องเที่ยว, มูลค่าเศรษฐกิจ',
+              color: const Color(0xFF4CAF50),
+              onTap: () => _navigateToEcosystemService(),
             ),
             
             const SizedBox(height: 16),
             
             _buildFunctionCard(
               context,
-              icon: Icons.eco,
-              title: 'จัดการข้อมูลบริการทางนิเวศ',
-              subtitle: 'ทรัพยากรที่ใช้ประโยชน์, การท่องเที่ยว, มูลค่าเศรษฐกิจ',
-              color: const Color(0xFF4CAF50),
-              onTap: () => _navigateToEcosystemService(),
+              icon: Icons.assessment,
+              title: 'รายงานรายไตรมาส',
+              subtitle: 'สรุปมูลค่าเศรษฐกิจและบริการนิเวศรายไตรมาส',
+              color: Colors.teal,
+              onTap: () => _navigateToQuarterlyIncome(),
             ),
             
             const SizedBox(height: 16),
