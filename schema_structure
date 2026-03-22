@@ -1,0 +1,2183 @@
+--
+-- mydb_kritdev_userQL database dump
+--
+
+-- Dumped from database version 17.5
+-- Dumped by pg_dump version 18.2
+
+-- Started on 2026-03-21 00:49:31 +07
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+SET search_path TO eastern_mangrove_communities;
+--
+-- TOC entry 2 (class 3079 OID 17038)
+-- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+
+
+--
+-- TOC entry 3991 (class 0 OID 0)
+-- Dependencies: 2
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+--
+-- TOC entry 254 (class 1255 OID 17221)
+-- Name: update_activity_participants(); Type: FUNCTION; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE FUNCTION public.update_activity_participants() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    -- This would be implemented when we have activity participants table
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_activity_participants() OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 253 (class 1255 OID 17217)
+-- Name: update_updated_at_column(); Type: FUNCTION; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE FUNCTION public.update_updated_at_column() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_updated_at_column() OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 230 (class 1259 OID 17408)
+-- Name: active_communities; Type: VIEW; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE VIEW public.active_communities AS
+SELECT
+    NULL::integer AS id,
+    NULL::character varying(200) AS community_name,
+    NULL::character varying(300) AS location,
+    NULL::character varying(150) AS contact_person,
+    NULL::character varying(20) AS phone_number,
+    NULL::character varying(255) AS email,
+    NULL::text AS description,
+    NULL::integer AS established_year,
+    NULL::integer AS member_count,
+    NULL::character varying(20) AS photo_type,
+    NULL::character varying(20) AS registration_status,
+    NULL::integer AS approved_by,
+    NULL::timestamp with time zone AS approved_at,
+    NULL::point AS coordinates,
+    NULL::numeric(10,2) AS area_size,
+    NULL::text[] AS mangrove_species,
+    NULL::character varying(50) AS conservation_status,
+    NULL::text AS website_url,
+    NULL::jsonb AS social_media,
+    NULL::timestamp with time zone AS created_at,
+    NULL::timestamp with time zone AS updated_at,
+    NULL::text AS approved_by_name,
+    NULL::bigint AS member_count_actual;
+
+
+ALTER VIEW public.active_communities OWNER TO mydb_kritdev_user;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 229 (class 1259 OID 17365)
+-- Name: activity_logs; Type: TABLE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TABLE public.activity_logs (
+    id integer NOT NULL,
+    user_id integer,
+    action character varying(100) NOT NULL,
+    entity_type character varying(50) NOT NULL,
+    entity_id integer,
+    description text,
+    ip_address inet,
+    user_agent text,
+    metadata jsonb,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.activity_logs OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 228 (class 1259 OID 17364)
+-- Name: activity_logs_id_seq; Type: SEQUENCE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE SEQUENCE public.activity_logs_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.activity_logs_id_seq OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 3994 (class 0 OID 0)
+-- Dependencies: 228
+-- Name: activity_logs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER SEQUENCE public.activity_logs_id_seq OWNED BY public.activity_logs.id;
+
+
+--
+-- TOC entry 242 (class 1259 OID 17590)
+-- Name: admin_actions; Type: TABLE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TABLE public.admin_actions (
+    id integer NOT NULL,
+    admin_id integer NOT NULL,
+    action_type character varying(50) NOT NULL,
+    target_type character varying(50) NOT NULL,
+    target_id integer NOT NULL,
+    notes text,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.admin_actions OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 3996 (class 0 OID 0)
+-- Dependencies: 242
+-- Name: TABLE admin_actions; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON TABLE public.admin_actions IS 'Logs all administrative actions for audit trail';
+
+
+--
+-- TOC entry 3997 (class 0 OID 0)
+-- Dependencies: 242
+-- Name: COLUMN admin_actions.action_type; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.admin_actions.action_type IS 'Type of action performed (approve_community, reject_community, etc.)';
+
+
+--
+-- TOC entry 3998 (class 0 OID 0)
+-- Dependencies: 242
+-- Name: COLUMN admin_actions.target_type; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.admin_actions.target_type IS 'Type of entity being acted upon (community, user, etc.)';
+
+
+--
+-- TOC entry 3999 (class 0 OID 0)
+-- Dependencies: 242
+-- Name: COLUMN admin_actions.target_id; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.admin_actions.target_id IS 'ID of the entity being acted upon';
+
+
+--
+-- TOC entry 241 (class 1259 OID 17589)
+-- Name: admin_actions_id_seq; Type: SEQUENCE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE SEQUENCE public.admin_actions_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.admin_actions_id_seq OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 4001 (class 0 OID 0)
+-- Dependencies: 241
+-- Name: admin_actions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER SEQUENCE public.admin_actions_id_seq OWNED BY public.admin_actions.id;
+
+
+--
+-- TOC entry 221 (class 1259 OID 17255)
+-- Name: communities; Type: TABLE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TABLE public.communities (
+    id integer NOT NULL,
+    community_name character varying(200) NOT NULL,
+    location character varying(300) NOT NULL,
+    contact_person character varying(150) NOT NULL,
+    phone_number character varying(20) NOT NULL,
+    email character varying(255) NOT NULL,
+    description text,
+    established_year integer,
+    member_count integer,
+    photo_type character varying(20),
+    registration_status character varying(20) DEFAULT 'pending'::character varying,
+    approved_by integer,
+    approved_at timestamp with time zone,
+    coordinates point,
+    area_size numeric(10,2),
+    mangrove_species text[],
+    conservation_status character varying(50),
+    website_url text,
+    social_media jsonb,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    village_name character varying(200),
+    sub_district character varying(150),
+    district character varying(150),
+    province character varying(150),
+    total_population integer DEFAULT 0,
+    resource_dependent_population integer DEFAULT 0,
+    households integer DEFAULT 0,
+    main_occupation character varying(100),
+    main_religion character varying(50),
+    occupations text[],
+    average_income numeric(15,2) DEFAULT 0,
+    rejected_by integer,
+    rejected_at timestamp with time zone,
+    rejection_reason text,
+    CONSTRAINT communities_average_income_check CHECK ((average_income >= (0)::numeric)),
+    CONSTRAINT communities_email_valid CHECK (((email)::text ~* '^[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+.[A-Za-z]{2,}$'::text)),
+    CONSTRAINT communities_established_year_check CHECK (((established_year >= 1900) AND ((established_year)::numeric <= EXTRACT(year FROM now())))),
+    CONSTRAINT communities_households_check CHECK ((households >= 0)),
+    CONSTRAINT communities_member_count_check CHECK ((member_count > 0)),
+    CONSTRAINT communities_photo_type_check CHECK (((photo_type)::text = ANY ((ARRAY['profile'::character varying, 'community'::character varying, 'activity'::character varying, 'mangrove'::character varying])::text[]))),
+    CONSTRAINT communities_registration_status_check CHECK (((registration_status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'suspended'::character varying])::text[]))),
+    CONSTRAINT communities_resource_dependent_population_check CHECK ((resource_dependent_population >= 0)),
+    CONSTRAINT communities_total_population_check CHECK ((total_population >= 0))
+);
+
+
+ALTER TABLE public.communities OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 4003 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: COLUMN communities.approved_by; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.communities.approved_by IS 'Admin user ID who approved this community';
+
+
+--
+-- TOC entry 4004 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: COLUMN communities.approved_at; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.communities.approved_at IS 'Timestamp when the community was approved';
+
+
+--
+-- TOC entry 4005 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: COLUMN communities.village_name; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.communities.village_name IS 'ชื่อหมู่บ้าน';
+
+
+--
+-- TOC entry 4006 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: COLUMN communities.sub_district; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.communities.sub_district IS 'ตำบล';
+
+
+--
+-- TOC entry 4007 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: COLUMN communities.district; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.communities.district IS 'อำเภอ';
+
+
+--
+-- TOC entry 4008 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: COLUMN communities.province; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.communities.province IS 'จังหวัด';
+
+
+--
+-- TOC entry 4009 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: COLUMN communities.total_population; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.communities.total_population IS 'จำนวนประชากรทั้งหมด (คน)';
+
+
+--
+-- TOC entry 4010 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: COLUMN communities.resource_dependent_population; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.communities.resource_dependent_population IS 'จำนวนคนที่พึ่งพิงทรัพยากรป่าชายเลน (คน)';
+
+
+--
+-- TOC entry 4011 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: COLUMN communities.households; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.communities.households IS 'จำนวนครัวเรือน';
+
+
+--
+-- TOC entry 4012 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: COLUMN communities.main_occupation; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.communities.main_occupation IS 'อาชีพหลัก';
+
+
+--
+-- TOC entry 4013 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: COLUMN communities.main_religion; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.communities.main_religion IS 'ศาสนาหลัก';
+
+
+--
+-- TOC entry 4014 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: COLUMN communities.occupations; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.communities.occupations IS 'อาชีพที่มีในชุมชน (array)';
+
+
+--
+-- TOC entry 4015 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: COLUMN communities.average_income; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.communities.average_income IS 'รายได้เฉลี่ยต่อครัวเรือน (บาท/เดือน)';
+
+
+--
+-- TOC entry 4016 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: COLUMN communities.rejected_by; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.communities.rejected_by IS 'Admin user ID who rejected this community';
+
+
+--
+-- TOC entry 4017 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: COLUMN communities.rejected_at; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.communities.rejected_at IS 'Timestamp when the community was rejected';
+
+
+--
+-- TOC entry 4018 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: COLUMN communities.rejection_reason; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.communities.rejection_reason IS 'Reason provided by admin for rejection';
+
+
+--
+-- TOC entry 220 (class 1259 OID 17254)
+-- Name: communities_id_seq; Type: SEQUENCE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE SEQUENCE public.communities_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.communities_id_seq OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 4020 (class 0 OID 0)
+-- Dependencies: 220
+-- Name: communities_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER SEQUENCE public.communities_id_seq OWNED BY public.communities.id;
+
+
+--
+-- TOC entry 225 (class 1259 OID 17307)
+-- Name: community_activities; Type: TABLE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TABLE public.community_activities (
+    id integer NOT NULL,
+    community_id integer NOT NULL,
+    created_by integer,
+    title character varying(300) NOT NULL,
+    description text,
+    activity_type character varying(50) NOT NULL,
+    start_date timestamp with time zone NOT NULL,
+    end_date timestamp with time zone,
+    location character varying(300),
+    coordinates point,
+    max_participants integer,
+    current_participants integer DEFAULT 0,
+    status character varying(30) DEFAULT 'planned'::character varying,
+    budget numeric(12,2),
+    funding_source character varying(200),
+    impact_metrics jsonb,
+    photos text[],
+    documents text[],
+    tags text[],
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT community_activities_activity_type_check CHECK (((activity_type)::text = ANY ((ARRAY['conservation'::character varying, 'education'::character varying, 'research'::character varying, 'restoration'::character varying, 'monitoring'::character varying, 'community_event'::character varying, 'training'::character varying, 'cleanup'::character varying, 'planting'::character varying, 'survey'::character varying])::text[]))),
+    CONSTRAINT community_activities_budget_check CHECK ((budget >= (0)::numeric)),
+    CONSTRAINT community_activities_current_participants_check CHECK ((current_participants >= 0)),
+    CONSTRAINT community_activities_max_participants_check CHECK ((max_participants > 0)),
+    CONSTRAINT community_activities_status_check CHECK (((status)::text = ANY ((ARRAY['planned'::character varying, 'ongoing'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.community_activities OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 224 (class 1259 OID 17306)
+-- Name: community_activities_id_seq; Type: SEQUENCE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE SEQUENCE public.community_activities_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.community_activities_id_seq OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 4023 (class 0 OID 0)
+-- Dependencies: 224
+-- Name: community_activities_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER SEQUENCE public.community_activities_id_seq OWNED BY public.community_activities.id;
+
+
+--
+-- TOC entry 223 (class 1259 OID 17281)
+-- Name: community_members; Type: TABLE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TABLE public.community_members (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    community_id integer NOT NULL,
+    role character varying(50) DEFAULT 'member'::character varying,
+    joined_at timestamp with time zone DEFAULT now(),
+    is_active boolean DEFAULT true,
+    permissions jsonb DEFAULT '{}'::jsonb,
+    CONSTRAINT community_members_role_check CHECK (((role)::text = ANY ((ARRAY['admin'::character varying, 'moderator'::character varying, 'member'::character varying, 'volunteer'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.community_members OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 222 (class 1259 OID 17280)
+-- Name: community_members_id_seq; Type: SEQUENCE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE SEQUENCE public.community_members_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.community_members_id_seq OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 4026 (class 0 OID 0)
+-- Dependencies: 222
+-- Name: community_members_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER SEQUENCE public.community_members_id_seq OWNED BY public.community_members.id;
+
+
+--
+-- TOC entry 236 (class 1259 OID 17455)
+-- Name: economic_data; Type: TABLE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TABLE public.economic_data (
+    id integer NOT NULL,
+    community_id integer NOT NULL,
+    year integer NOT NULL,
+    quarter integer,
+    income_fishery numeric(15,2) DEFAULT 0,
+    income_tourism numeric(15,2) DEFAULT 0,
+    income_agriculture numeric(15,2) DEFAULT 0,
+    income_others numeric(15,2) DEFAULT 0,
+    total_income numeric(15,2) GENERATED ALWAYS AS ((((COALESCE(income_fishery, (0)::numeric) + COALESCE(income_tourism, (0)::numeric)) + COALESCE(income_agriculture, (0)::numeric)) + COALESCE(income_others, (0)::numeric))) STORED,
+    employment_count integer DEFAULT 0,
+    notes text,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT economic_data_employment_count_check CHECK ((employment_count >= 0)),
+    CONSTRAINT economic_data_income_agriculture_check CHECK ((income_agriculture >= (0)::numeric)),
+    CONSTRAINT economic_data_income_fishery_check CHECK ((income_fishery >= (0)::numeric)),
+    CONSTRAINT economic_data_income_others_check CHECK ((income_others >= (0)::numeric)),
+    CONSTRAINT economic_data_income_tourism_check CHECK ((income_tourism >= (0)::numeric)),
+    CONSTRAINT economic_data_quarter_check CHECK (((quarter >= 1) AND (quarter <= 4))),
+    CONSTRAINT economic_data_year_check CHECK (((year >= 2000) AND (year <= 2100)))
+);
+
+
+ALTER TABLE public.economic_data OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 235 (class 1259 OID 17454)
+-- Name: economic_data_id_seq; Type: SEQUENCE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE SEQUENCE public.economic_data_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.economic_data_id_seq OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 4029 (class 0 OID 0)
+-- Dependencies: 235
+-- Name: economic_data_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER SEQUENCE public.economic_data_id_seq OWNED BY public.economic_data.id;
+
+
+--
+-- TOC entry 238 (class 1259 OID 17486)
+-- Name: ecosystem_services; Type: TABLE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TABLE public.ecosystem_services (
+    id integer NOT NULL,
+    community_id integer NOT NULL,
+    service_type character varying(50) NOT NULL,
+    service_name character varying(200) NOT NULL,
+    quantity numeric(12,2) DEFAULT 0,
+    unit character varying(50),
+    economic_value numeric(15,2) DEFAULT 0,
+    year integer NOT NULL,
+    month integer,
+    description text,
+    beneficiaries_count integer DEFAULT 0,
+    measurement_method character varying(100),
+    data_source character varying(100),
+    confidence_level character varying(20),
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    category character varying(20) DEFAULT 'resource'::character varying,
+    unit_price numeric(15,2) DEFAULT 0,
+    participants integer DEFAULT 0,
+    price_per_person numeric(15,2) DEFAULT 0,
+    CONSTRAINT ecosystem_services_beneficiaries_count_check CHECK ((beneficiaries_count >= 0)),
+    CONSTRAINT ecosystem_services_category_check CHECK (((category)::text = ANY ((ARRAY['resource'::character varying, 'activity'::character varying])::text[]))),
+    CONSTRAINT ecosystem_services_confidence_level_check CHECK (((confidence_level)::text = ANY ((ARRAY['low'::character varying, 'medium'::character varying, 'high'::character varying, 'verified'::character varying])::text[]))),
+    CONSTRAINT ecosystem_services_economic_value_check CHECK ((economic_value >= (0)::numeric)),
+    CONSTRAINT ecosystem_services_month_check CHECK (((month >= 1) AND (month <= 12))),
+    CONSTRAINT ecosystem_services_service_type_check CHECK (((service_type)::text = ANY ((ARRAY['firewood'::character varying, 'crab'::character varying, 'shrimp'::character varying, 'shellfish'::character varying, 'fish'::character varying, 'other_resource'::character varying, 'tour_guide'::character varying, 'seminar'::character varying, 'learning_camp'::character varying, 'other_activity'::character varying, 'provisioning'::character varying, 'regulating'::character varying, 'supporting'::character varying, 'cultural'::character varying, 'ecotourism'::character varying, 'education'::character varying, 'recreation'::character varying])::text[]))),
+    CONSTRAINT ecosystem_services_year_check CHECK (((year >= 2000) AND (year <= 2100)))
+);
+
+
+ALTER TABLE public.ecosystem_services OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 4031 (class 0 OID 0)
+-- Dependencies: 238
+-- Name: COLUMN ecosystem_services.service_name; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.ecosystem_services.service_name IS 'Name of the service or resource';
+
+
+--
+-- TOC entry 4032 (class 0 OID 0)
+-- Dependencies: 238
+-- Name: COLUMN ecosystem_services.quantity; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.ecosystem_services.quantity IS 'Quantity for resources (e.g., weight in kg)';
+
+
+--
+-- TOC entry 4033 (class 0 OID 0)
+-- Dependencies: 238
+-- Name: COLUMN ecosystem_services.unit; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.ecosystem_services.unit IS 'Unit of measurement (default: กก.)';
+
+
+--
+-- TOC entry 4034 (class 0 OID 0)
+-- Dependencies: 238
+-- Name: COLUMN ecosystem_services.economic_value; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.ecosystem_services.economic_value IS 'Calculated economic value = quantity × unit_price OR participants × price_per_person';
+
+
+--
+-- TOC entry 4035 (class 0 OID 0)
+-- Dependencies: 238
+-- Name: COLUMN ecosystem_services.year; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.ecosystem_services.year IS 'Year in Buddhist Era (พ.ศ.)';
+
+
+--
+-- TOC entry 4036 (class 0 OID 0)
+-- Dependencies: 238
+-- Name: COLUMN ecosystem_services.month; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.ecosystem_services.month IS 'Month (1-12)';
+
+
+--
+-- TOC entry 4037 (class 0 OID 0)
+-- Dependencies: 238
+-- Name: COLUMN ecosystem_services.category; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.ecosystem_services.category IS 'Type of service: resource (weight-based) or activity (participant-based)';
+
+
+--
+-- TOC entry 4038 (class 0 OID 0)
+-- Dependencies: 238
+-- Name: COLUMN ecosystem_services.unit_price; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.ecosystem_services.unit_price IS 'Price per unit for resources (baht/kg)';
+
+
+--
+-- TOC entry 4039 (class 0 OID 0)
+-- Dependencies: 238
+-- Name: COLUMN ecosystem_services.participants; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.ecosystem_services.participants IS 'Number of participants for activities';
+
+
+--
+-- TOC entry 4040 (class 0 OID 0)
+-- Dependencies: 238
+-- Name: COLUMN ecosystem_services.price_per_person; Type: COMMENT; Schema: public; Owner: mydb_kritdev_user
+--
+
+COMMENT ON COLUMN public.ecosystem_services.price_per_person IS 'Cost per person for activities (baht/person)';
+
+
+--
+-- TOC entry 237 (class 1259 OID 17485)
+-- Name: ecosystem_services_id_seq; Type: SEQUENCE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE SEQUENCE public.ecosystem_services_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.ecosystem_services_id_seq OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 4042 (class 0 OID 0)
+-- Dependencies: 237
+-- Name: ecosystem_services_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER SEQUENCE public.ecosystem_services_id_seq OWNED BY public.ecosystem_services.id;
+
+
+--
+-- TOC entry 234 (class 1259 OID 17436)
+-- Name: mangrove_areas; Type: TABLE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TABLE public.mangrove_areas (
+    id integer NOT NULL,
+    community_id integer,
+    area_name character varying(200) NOT NULL,
+    location character varying(300) NOT NULL,
+    province character varying(100) NOT NULL,
+    size_hectares numeric(10,2),
+    mangrove_species text[],
+    conservation_status character varying(50),
+    latitude numeric(10,7),
+    longitude numeric(10,7),
+    description text,
+    established_year integer,
+    managing_organization character varying(200),
+    threats text[],
+    conservation_activities text[],
+    photos text[],
+    monitoring_data jsonb,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT mangrove_areas_conservation_status_check CHECK (((conservation_status)::text = ANY (ARRAY['protected'::text, 'monitored'::text, 'threatened'::text, 'restored'::text, 'excellent'::text, 'good'::text, 'moderate'::text, 'poor'::text, 'critical'::text]))),
+    CONSTRAINT mangrove_areas_established_year_check CHECK (((established_year >= 1900) AND ((established_year)::numeric <= EXTRACT(year FROM now())))),
+    CONSTRAINT mangrove_areas_size_hectares_check CHECK ((size_hectares > (0)::numeric))
+);
+
+
+ALTER TABLE public.mangrove_areas OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 233 (class 1259 OID 17435)
+-- Name: mangrove_areas_id_seq; Type: SEQUENCE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE SEQUENCE public.mangrove_areas_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.mangrove_areas_id_seq OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 4045 (class 0 OID 0)
+-- Dependencies: 233
+-- Name: mangrove_areas_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER SEQUENCE public.mangrove_areas_id_seq OWNED BY public.mangrove_areas.id;
+
+
+--
+-- TOC entry 227 (class 1259 OID 17335)
+-- Name: photo_uploads; Type: TABLE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TABLE public.photo_uploads (
+    id integer NOT NULL,
+    uploaded_by integer,
+    community_id integer,
+    activity_id integer,
+    filename character varying(255) NOT NULL,
+    original_filename character varying(255),
+    file_path text NOT NULL,
+    file_size integer,
+    mime_type character varying(100),
+    photo_type character varying(30) NOT NULL,
+    description text,
+    coordinates point,
+    taken_at timestamp with time zone,
+    metadata jsonb,
+    is_public boolean DEFAULT true,
+    is_featured boolean DEFAULT false,
+    tags text[],
+    created_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT photo_uploads_file_size_check CHECK ((file_size > 0)),
+    CONSTRAINT photo_uploads_photo_type_check CHECK (((photo_type)::text = ANY ((ARRAY['profile'::character varying, 'community'::character varying, 'activity'::character varying, 'mangrove'::character varying, 'before_after'::character varying, 'monitoring'::character varying, 'species'::character varying, 'damage'::character varying, 'restoration'::character varying])::text[]))),
+    CONSTRAINT photo_uploads_reference_check CHECK (((community_id IS NOT NULL) OR (activity_id IS NOT NULL)))
+);
+
+
+ALTER TABLE public.photo_uploads OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 226 (class 1259 OID 17334)
+-- Name: photo_uploads_id_seq; Type: SEQUENCE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE SEQUENCE public.photo_uploads_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.photo_uploads_id_seq OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 4048 (class 0 OID 0)
+-- Dependencies: 226
+-- Name: photo_uploads_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER SEQUENCE public.photo_uploads_id_seq OWNED BY public.photo_uploads.id;
+
+
+--
+-- TOC entry 240 (class 1259 OID 17511)
+-- Name: pollution_reports; Type: TABLE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TABLE public.pollution_reports (
+    id integer NOT NULL,
+    community_id integer NOT NULL,
+    report_type character varying(50) NOT NULL,
+    pollution_source character varying(255) NOT NULL,
+    severity_level character varying(20) NOT NULL,
+    description text NOT NULL,
+    latitude numeric(10,7),
+    longitude numeric(10,7),
+    report_date timestamp with time zone DEFAULT now(),
+    status character varying(30) DEFAULT 'pending'::character varying,
+    reported_by integer,
+    assigned_to integer,
+    resolution_notes text,
+    resolved_at timestamp with time zone,
+    photos text[],
+    affected_area_hectares numeric(10,2),
+    estimated_cost numeric(15,2),
+    action_taken text,
+    follow_up_required boolean DEFAULT true,
+    next_inspection_date date,
+    tags text[],
+    metadata jsonb,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT pollution_reports_report_type_check CHECK (((report_type)::text = ANY ((ARRAY['Water Pollution'::character varying, 'Air Pollution'::character varying, 'Community Waste'::character varying, 'Industrial Waste'::character varying])::text[]))),
+    CONSTRAINT pollution_reports_severity_level_check CHECK (((severity_level)::text = ANY ((ARRAY['low'::character varying, 'medium'::character varying, 'high'::character varying, 'critical'::character varying])::text[]))),
+    CONSTRAINT pollution_reports_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'investigating'::character varying, 'monitoring'::character varying, 'resolved'::character varying, 'closed'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.pollution_reports OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 239 (class 1259 OID 17510)
+-- Name: pollution_reports_id_seq; Type: SEQUENCE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE SEQUENCE public.pollution_reports_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.pollution_reports_id_seq OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 4051 (class 0 OID 0)
+-- Dependencies: 239
+-- Name: pollution_reports_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER SEQUENCE public.pollution_reports_id_seq OWNED BY public.pollution_reports.id;
+
+
+--
+-- TOC entry 219 (class 1259 OID 17238)
+-- Name: users; Type: TABLE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TABLE public.users (
+    id integer NOT NULL,
+    email character varying(255) NOT NULL,
+    password_hash character varying(255) NOT NULL,
+    first_name character varying(100) NOT NULL,
+    last_name character varying(100) NOT NULL,
+    user_type character varying(20) NOT NULL,
+    phone_number character varying(20),
+    is_active boolean DEFAULT true,
+    email_verified boolean DEFAULT false,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    last_login timestamp with time zone,
+    profile_image_url text,
+    bio text,
+    CONSTRAINT users_email_valid CHECK (((email)::text ~* '^[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+.[A-Za-z]{2,}$'::text)),
+    CONSTRAINT users_user_type_check CHECK (((user_type)::text = ANY ((ARRAY['admin'::character varying, 'community'::character varying, 'public'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.users OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 231 (class 1259 OID 17413)
+-- Name: upcoming_activities; Type: VIEW; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE VIEW public.upcoming_activities AS
+ SELECT ca.id,
+    ca.community_id,
+    ca.created_by,
+    ca.title,
+    ca.description,
+    ca.activity_type,
+    ca.start_date,
+    ca.end_date,
+    ca.location,
+    ca.coordinates,
+    ca.max_participants,
+    ca.current_participants,
+    ca.status,
+    ca.budget,
+    ca.funding_source,
+    ca.impact_metrics,
+    ca.photos,
+    ca.documents,
+    ca.tags,
+    ca.created_at,
+    ca.updated_at,
+    c.community_name,
+    c.location AS community_location,
+    (((u.first_name)::text || ' '::text) || (u.last_name)::text) AS created_by_name
+   FROM ((public.community_activities ca
+     JOIN public.communities c ON ((ca.community_id = c.id)))
+     LEFT JOIN public.users u ON ((ca.created_by = u.id)))
+  WHERE ((ca.start_date > now()) AND ((ca.status)::text = ANY ((ARRAY['planned'::character varying, 'ongoing'::character varying])::text[])))
+  ORDER BY ca.start_date;
+
+
+ALTER VIEW public.upcoming_activities OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 232 (class 1259 OID 17418)
+-- Name: user_statistics; Type: VIEW; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE VIEW public.user_statistics AS
+ SELECT user_type,
+    count(*) AS total_count,
+    count(
+        CASE
+            WHEN (is_active = true) THEN 1
+            ELSE NULL::integer
+        END) AS active_count,
+    count(
+        CASE
+            WHEN (email_verified = true) THEN 1
+            ELSE NULL::integer
+        END) AS verified_count
+   FROM public.users
+  GROUP BY user_type;
+
+
+ALTER VIEW public.user_statistics OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 218 (class 1259 OID 17237)
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE SEQUENCE public.users_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.users_id_seq OWNER TO mydb_kritdev_user;
+
+--
+-- TOC entry 4056 (class 0 OID 0)
+-- Dependencies: 218
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
+
+
+--
+-- TOC entry 3659 (class 2604 OID 17368)
+-- Name: activity_logs id; Type: DEFAULT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.activity_logs ALTER COLUMN id SET DEFAULT nextval('public.activity_logs_id_seq'::regclass);
+
+
+--
+-- TOC entry 3689 (class 2604 OID 17593)
+-- Name: admin_actions id; Type: DEFAULT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.admin_actions ALTER COLUMN id SET DEFAULT nextval('public.admin_actions_id_seq'::regclass);
+
+
+--
+-- TOC entry 3637 (class 2604 OID 17258)
+-- Name: communities id; Type: DEFAULT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.communities ALTER COLUMN id SET DEFAULT nextval('public.communities_id_seq'::regclass);
+
+
+--
+-- TOC entry 3650 (class 2604 OID 17310)
+-- Name: community_activities id; Type: DEFAULT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.community_activities ALTER COLUMN id SET DEFAULT nextval('public.community_activities_id_seq'::regclass);
+
+
+--
+-- TOC entry 3645 (class 2604 OID 17284)
+-- Name: community_members id; Type: DEFAULT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.community_members ALTER COLUMN id SET DEFAULT nextval('public.community_members_id_seq'::regclass);
+
+
+--
+-- TOC entry 3664 (class 2604 OID 17458)
+-- Name: economic_data id; Type: DEFAULT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.economic_data ALTER COLUMN id SET DEFAULT nextval('public.economic_data_id_seq'::regclass);
+
+
+--
+-- TOC entry 3673 (class 2604 OID 17489)
+-- Name: ecosystem_services id; Type: DEFAULT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.ecosystem_services ALTER COLUMN id SET DEFAULT nextval('public.ecosystem_services_id_seq'::regclass);
+
+
+--
+-- TOC entry 3661 (class 2604 OID 17439)
+-- Name: mangrove_areas id; Type: DEFAULT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.mangrove_areas ALTER COLUMN id SET DEFAULT nextval('public.mangrove_areas_id_seq'::regclass);
+
+
+--
+-- TOC entry 3655 (class 2604 OID 17338)
+-- Name: photo_uploads id; Type: DEFAULT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.photo_uploads ALTER COLUMN id SET DEFAULT nextval('public.photo_uploads_id_seq'::regclass);
+
+
+--
+-- TOC entry 3683 (class 2604 OID 17514)
+-- Name: pollution_reports id; Type: DEFAULT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.pollution_reports ALTER COLUMN id SET DEFAULT nextval('public.pollution_reports_id_seq'::regclass);
+
+
+--
+-- TOC entry 3632 (class 2604 OID 17241)
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- TOC entry 3777 (class 2606 OID 17373)
+-- Name: activity_logs activity_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.activity_logs
+    ADD CONSTRAINT activity_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3809 (class 2606 OID 17598)
+-- Name: admin_actions admin_actions_pkey; Type: CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.admin_actions
+    ADD CONSTRAINT admin_actions_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3740 (class 2606 OID 17270)
+-- Name: communities communities_pkey; Type: CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.communities
+    ADD CONSTRAINT communities_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3742 (class 2606 OID 17274)
+-- Name: communities communities_unique_email; Type: CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.communities
+    ADD CONSTRAINT communities_unique_email UNIQUE (email);
+
+
+--
+-- TOC entry 3744 (class 2606 OID 17272)
+-- Name: communities communities_unique_name; Type: CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.communities
+    ADD CONSTRAINT communities_unique_name UNIQUE (community_name);
+
+
+--
+-- TOC entry 3762 (class 2606 OID 17323)
+-- Name: community_activities community_activities_pkey; Type: CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.community_activities
+    ADD CONSTRAINT community_activities_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3755 (class 2606 OID 17293)
+-- Name: community_members community_members_pkey; Type: CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.community_members
+    ADD CONSTRAINT community_members_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3757 (class 2606 OID 17295)
+-- Name: community_members community_members_unique; Type: CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.community_members
+    ADD CONSTRAINT community_members_unique UNIQUE (user_id, community_id);
+
+
+--
+-- TOC entry 3787 (class 2606 OID 17477)
+-- Name: economic_data economic_data_pkey; Type: CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.economic_data
+    ADD CONSTRAINT economic_data_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3789 (class 2606 OID 17479)
+-- Name: economic_data economic_data_unique; Type: CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.economic_data
+    ADD CONSTRAINT economic_data_unique UNIQUE (community_id, year, quarter);
+
+
+--
+-- TOC entry 3794 (class 2606 OID 17504)
+-- Name: ecosystem_services ecosystem_services_pkey; Type: CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.ecosystem_services
+    ADD CONSTRAINT ecosystem_services_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3785 (class 2606 OID 17448)
+-- Name: mangrove_areas mangrove_areas_pkey; Type: CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.mangrove_areas
+    ADD CONSTRAINT mangrove_areas_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3775 (class 2606 OID 17348)
+-- Name: photo_uploads photo_uploads_pkey; Type: CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.photo_uploads
+    ADD CONSTRAINT photo_uploads_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3807 (class 2606 OID 17526)
+-- Name: pollution_reports pollution_reports_pkey; Type: CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.pollution_reports
+    ADD CONSTRAINT pollution_reports_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3736 (class 2606 OID 17253)
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_email_key UNIQUE (email);
+
+
+--
+-- TOC entry 3738 (class 2606 OID 17251)
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3763 (class 1259 OID 17390)
+-- Name: idx_activities_community_id; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_activities_community_id ON public.community_activities USING btree (community_id);
+
+
+--
+-- TOC entry 3764 (class 1259 OID 17394)
+-- Name: idx_activities_coordinates; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_activities_coordinates ON public.community_activities USING gist (coordinates);
+
+
+--
+-- TOC entry 3765 (class 1259 OID 17393)
+-- Name: idx_activities_start_date; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_activities_start_date ON public.community_activities USING btree (start_date);
+
+
+--
+-- TOC entry 3766 (class 1259 OID 17392)
+-- Name: idx_activities_status; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_activities_status ON public.community_activities USING btree (status);
+
+
+--
+-- TOC entry 3767 (class 1259 OID 17391)
+-- Name: idx_activities_type; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_activities_type ON public.community_activities USING btree (activity_type);
+
+
+--
+-- TOC entry 3778 (class 1259 OID 17402)
+-- Name: idx_activity_logs_action; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_activity_logs_action ON public.activity_logs USING btree (action);
+
+
+--
+-- TOC entry 3779 (class 1259 OID 17404)
+-- Name: idx_activity_logs_created_at; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_activity_logs_created_at ON public.activity_logs USING btree (created_at);
+
+
+--
+-- TOC entry 3780 (class 1259 OID 17403)
+-- Name: idx_activity_logs_entity; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_activity_logs_entity ON public.activity_logs USING btree (entity_type, entity_id);
+
+
+--
+-- TOC entry 3781 (class 1259 OID 17401)
+-- Name: idx_activity_logs_user_id; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_activity_logs_user_id ON public.activity_logs USING btree (user_id);
+
+
+--
+-- TOC entry 3810 (class 1259 OID 17604)
+-- Name: idx_admin_actions_admin_id; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_admin_actions_admin_id ON public.admin_actions USING btree (admin_id);
+
+
+--
+-- TOC entry 3811 (class 1259 OID 17606)
+-- Name: idx_admin_actions_created_at; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_admin_actions_created_at ON public.admin_actions USING btree (created_at DESC);
+
+
+--
+-- TOC entry 3812 (class 1259 OID 17605)
+-- Name: idx_admin_actions_target; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_admin_actions_target ON public.admin_actions USING btree (target_type, target_id);
+
+
+--
+-- TOC entry 3745 (class 1259 OID 17587)
+-- Name: idx_communities_approved_at; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_communities_approved_at ON public.communities USING btree (approved_at DESC);
+
+
+--
+-- TOC entry 3746 (class 1259 OID 17386)
+-- Name: idx_communities_coordinates; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_communities_coordinates ON public.communities USING gist (coordinates);
+
+
+--
+-- TOC entry 3747 (class 1259 OID 17385)
+-- Name: idx_communities_created_at; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_communities_created_at ON public.communities USING btree (created_at);
+
+
+--
+-- TOC entry 3748 (class 1259 OID 17569)
+-- Name: idx_communities_district; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_communities_district ON public.communities USING btree (district);
+
+
+--
+-- TOC entry 3749 (class 1259 OID 17384)
+-- Name: idx_communities_location; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_communities_location ON public.communities USING btree (location);
+
+
+--
+-- TOC entry 3750 (class 1259 OID 17568)
+-- Name: idx_communities_province; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_communities_province ON public.communities USING btree (province);
+
+
+--
+-- TOC entry 3751 (class 1259 OID 17586)
+-- Name: idx_communities_registration_status; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_communities_registration_status ON public.communities USING btree (registration_status);
+
+
+--
+-- TOC entry 3752 (class 1259 OID 17588)
+-- Name: idx_communities_rejected_at; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_communities_rejected_at ON public.communities USING btree (rejected_at DESC);
+
+
+--
+-- TOC entry 3753 (class 1259 OID 17383)
+-- Name: idx_communities_status; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_communities_status ON public.communities USING btree (registration_status);
+
+
+--
+-- TOC entry 3758 (class 1259 OID 17388)
+-- Name: idx_community_members_community_id; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_community_members_community_id ON public.community_members USING btree (community_id);
+
+
+--
+-- TOC entry 3759 (class 1259 OID 17389)
+-- Name: idx_community_members_role; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_community_members_role ON public.community_members USING btree (role);
+
+
+--
+-- TOC entry 3760 (class 1259 OID 17387)
+-- Name: idx_community_members_user_id; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_community_members_user_id ON public.community_members USING btree (user_id);
+
+
+--
+-- TOC entry 3790 (class 1259 OID 17544)
+-- Name: idx_economic_data_community_id; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_economic_data_community_id ON public.economic_data USING btree (community_id);
+
+
+--
+-- TOC entry 3791 (class 1259 OID 17546)
+-- Name: idx_economic_data_created_at; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_economic_data_created_at ON public.economic_data USING btree (created_at);
+
+
+--
+-- TOC entry 3792 (class 1259 OID 17545)
+-- Name: idx_economic_data_year_quarter; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_economic_data_year_quarter ON public.economic_data USING btree (year, quarter);
+
+
+--
+-- TOC entry 3795 (class 1259 OID 17575)
+-- Name: idx_ecosystem_services_category; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_ecosystem_services_category ON public.ecosystem_services USING btree (category);
+
+
+--
+-- TOC entry 3796 (class 1259 OID 17547)
+-- Name: idx_ecosystem_services_community_id; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_ecosystem_services_community_id ON public.ecosystem_services USING btree (community_id);
+
+
+--
+-- TOC entry 3797 (class 1259 OID 17550)
+-- Name: idx_ecosystem_services_created_at; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_ecosystem_services_created_at ON public.ecosystem_services USING btree (created_at);
+
+
+--
+-- TOC entry 3798 (class 1259 OID 17576)
+-- Name: idx_ecosystem_services_service_type; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_ecosystem_services_service_type ON public.ecosystem_services USING btree (service_type);
+
+
+--
+-- TOC entry 3799 (class 1259 OID 17548)
+-- Name: idx_ecosystem_services_type; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_ecosystem_services_type ON public.ecosystem_services USING btree (service_type);
+
+
+--
+-- TOC entry 3800 (class 1259 OID 17549)
+-- Name: idx_ecosystem_services_year_month; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_ecosystem_services_year_month ON public.ecosystem_services USING btree (year, month);
+
+
+--
+-- TOC entry 3782 (class 1259 OID 17543)
+-- Name: idx_mangrove_areas_community_id; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_mangrove_areas_community_id ON public.mangrove_areas USING btree (community_id);
+
+
+--
+-- TOC entry 3783 (class 1259 OID 17542)
+-- Name: idx_mangrove_areas_province; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_mangrove_areas_province ON public.mangrove_areas USING btree (province);
+
+
+--
+-- TOC entry 3768 (class 1259 OID 17396)
+-- Name: idx_photos_activity_id; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_photos_activity_id ON public.photo_uploads USING btree (activity_id);
+
+
+--
+-- TOC entry 3769 (class 1259 OID 17395)
+-- Name: idx_photos_community_id; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_photos_community_id ON public.photo_uploads USING btree (community_id);
+
+
+--
+-- TOC entry 3770 (class 1259 OID 17400)
+-- Name: idx_photos_coordinates; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_photos_coordinates ON public.photo_uploads USING gist (coordinates);
+
+
+--
+-- TOC entry 3771 (class 1259 OID 17399)
+-- Name: idx_photos_taken_at; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_photos_taken_at ON public.photo_uploads USING btree (taken_at);
+
+
+--
+-- TOC entry 3772 (class 1259 OID 17397)
+-- Name: idx_photos_type; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_photos_type ON public.photo_uploads USING btree (photo_type);
+
+
+--
+-- TOC entry 3773 (class 1259 OID 17398)
+-- Name: idx_photos_uploaded_by; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_photos_uploaded_by ON public.photo_uploads USING btree (uploaded_by);
+
+
+--
+-- TOC entry 3801 (class 1259 OID 17551)
+-- Name: idx_pollution_reports_community_id; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_pollution_reports_community_id ON public.pollution_reports USING btree (community_id);
+
+
+--
+-- TOC entry 3802 (class 1259 OID 17555)
+-- Name: idx_pollution_reports_date; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_pollution_reports_date ON public.pollution_reports USING btree (report_date);
+
+
+--
+-- TOC entry 3803 (class 1259 OID 17553)
+-- Name: idx_pollution_reports_severity; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_pollution_reports_severity ON public.pollution_reports USING btree (severity_level);
+
+
+--
+-- TOC entry 3804 (class 1259 OID 17552)
+-- Name: idx_pollution_reports_status; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_pollution_reports_status ON public.pollution_reports USING btree (status);
+
+
+--
+-- TOC entry 3805 (class 1259 OID 17554)
+-- Name: idx_pollution_reports_type; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_pollution_reports_type ON public.pollution_reports USING btree (report_type);
+
+
+--
+-- TOC entry 3731 (class 1259 OID 17381)
+-- Name: idx_users_created_at; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_users_created_at ON public.users USING btree (created_at);
+
+
+--
+-- TOC entry 3732 (class 1259 OID 17379)
+-- Name: idx_users_email; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_users_email ON public.users USING btree (email);
+
+
+--
+-- TOC entry 3733 (class 1259 OID 17382)
+-- Name: idx_users_is_active; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_users_is_active ON public.users USING btree (is_active);
+
+
+--
+-- TOC entry 3734 (class 1259 OID 17380)
+-- Name: idx_users_user_type; Type: INDEX; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE INDEX idx_users_user_type ON public.users USING btree (user_type);
+
+
+--
+-- TOC entry 3982 (class 2618 OID 17411)
+-- Name: active_communities _RETURN; Type: RULE; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE OR REPLACE VIEW public.active_communities AS
+ SELECT c.id,
+    c.community_name,
+    c.location,
+    c.contact_person,
+    c.phone_number,
+    c.email,
+    c.description,
+    c.established_year,
+    c.member_count,
+    c.photo_type,
+    c.registration_status,
+    c.approved_by,
+    c.approved_at,
+    c.coordinates,
+    c.area_size,
+    c.mangrove_species,
+    c.conservation_status,
+    c.website_url,
+    c.social_media,
+    c.created_at,
+    c.updated_at,
+    (((u.first_name)::text || ' '::text) || (u.last_name)::text) AS approved_by_name,
+    count(cm.id) AS member_count_actual
+   FROM ((public.communities c
+     LEFT JOIN public.users u ON ((c.approved_by = u.id)))
+     LEFT JOIN public.community_members cm ON (((c.id = cm.community_id) AND (cm.is_active = true))))
+  WHERE ((c.registration_status)::text = 'approved'::text)
+  GROUP BY c.id, u.first_name, u.last_name;
+
+
+--
+-- TOC entry 3832 (class 2620 OID 17407)
+-- Name: community_activities update_activities_updated_at; Type: TRIGGER; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TRIGGER update_activities_updated_at BEFORE UPDATE ON public.community_activities FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- TOC entry 3831 (class 2620 OID 17406)
+-- Name: communities update_communities_updated_at; Type: TRIGGER; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TRIGGER update_communities_updated_at BEFORE UPDATE ON public.communities FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- TOC entry 3834 (class 2620 OID 17557)
+-- Name: economic_data update_economic_data_updated_at; Type: TRIGGER; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TRIGGER update_economic_data_updated_at BEFORE UPDATE ON public.economic_data FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- TOC entry 3835 (class 2620 OID 17558)
+-- Name: ecosystem_services update_ecosystem_services_updated_at; Type: TRIGGER; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TRIGGER update_ecosystem_services_updated_at BEFORE UPDATE ON public.ecosystem_services FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- TOC entry 3833 (class 2620 OID 17556)
+-- Name: mangrove_areas update_mangrove_areas_updated_at; Type: TRIGGER; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TRIGGER update_mangrove_areas_updated_at BEFORE UPDATE ON public.mangrove_areas FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- TOC entry 3836 (class 2620 OID 17559)
+-- Name: pollution_reports update_pollution_reports_updated_at; Type: TRIGGER; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TRIGGER update_pollution_reports_updated_at BEFORE UPDATE ON public.pollution_reports FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- TOC entry 3830 (class 2620 OID 17405)
+-- Name: users update_users_updated_at; Type: TRIGGER; Schema: public; Owner: mydb_kritdev_user
+--
+
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- TOC entry 3822 (class 2606 OID 17374)
+-- Name: activity_logs activity_logs_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.activity_logs
+    ADD CONSTRAINT activity_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- TOC entry 3829 (class 2606 OID 17599)
+-- Name: admin_actions admin_actions_admin_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.admin_actions
+    ADD CONSTRAINT admin_actions_admin_id_fkey FOREIGN KEY (admin_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3813 (class 2606 OID 17275)
+-- Name: communities communities_approved_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.communities
+    ADD CONSTRAINT communities_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES public.users(id);
+
+
+--
+-- TOC entry 3814 (class 2606 OID 17581)
+-- Name: communities communities_rejected_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.communities
+    ADD CONSTRAINT communities_rejected_by_fkey FOREIGN KEY (rejected_by) REFERENCES public.users(id);
+
+
+--
+-- TOC entry 3817 (class 2606 OID 17324)
+-- Name: community_activities community_activities_community_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.community_activities
+    ADD CONSTRAINT community_activities_community_id_fkey FOREIGN KEY (community_id) REFERENCES public.communities(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3818 (class 2606 OID 17329)
+-- Name: community_activities community_activities_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.community_activities
+    ADD CONSTRAINT community_activities_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id);
+
+
+--
+-- TOC entry 3815 (class 2606 OID 17301)
+-- Name: community_members community_members_community_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.community_members
+    ADD CONSTRAINT community_members_community_id_fkey FOREIGN KEY (community_id) REFERENCES public.communities(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3816 (class 2606 OID 17296)
+-- Name: community_members community_members_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.community_members
+    ADD CONSTRAINT community_members_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3824 (class 2606 OID 17480)
+-- Name: economic_data economic_data_community_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.economic_data
+    ADD CONSTRAINT economic_data_community_id_fkey FOREIGN KEY (community_id) REFERENCES public.communities(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3825 (class 2606 OID 17505)
+-- Name: ecosystem_services ecosystem_services_community_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.ecosystem_services
+    ADD CONSTRAINT ecosystem_services_community_id_fkey FOREIGN KEY (community_id) REFERENCES public.communities(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3823 (class 2606 OID 17449)
+-- Name: mangrove_areas mangrove_areas_community_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.mangrove_areas
+    ADD CONSTRAINT mangrove_areas_community_id_fkey FOREIGN KEY (community_id) REFERENCES public.communities(id) ON DELETE SET NULL;
+
+
+--
+-- TOC entry 3819 (class 2606 OID 17359)
+-- Name: photo_uploads photo_uploads_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.photo_uploads
+    ADD CONSTRAINT photo_uploads_activity_id_fkey FOREIGN KEY (activity_id) REFERENCES public.community_activities(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3820 (class 2606 OID 17354)
+-- Name: photo_uploads photo_uploads_community_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.photo_uploads
+    ADD CONSTRAINT photo_uploads_community_id_fkey FOREIGN KEY (community_id) REFERENCES public.communities(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3821 (class 2606 OID 17349)
+-- Name: photo_uploads photo_uploads_uploaded_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.photo_uploads
+    ADD CONSTRAINT photo_uploads_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id);
+
+
+--
+-- TOC entry 3826 (class 2606 OID 17537)
+-- Name: pollution_reports pollution_reports_assigned_to_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.pollution_reports
+    ADD CONSTRAINT pollution_reports_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.users(id);
+
+
+--
+-- TOC entry 3827 (class 2606 OID 17527)
+-- Name: pollution_reports pollution_reports_community_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.pollution_reports
+    ADD CONSTRAINT pollution_reports_community_id_fkey FOREIGN KEY (community_id) REFERENCES public.communities(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3828 (class 2606 OID 17532)
+-- Name: pollution_reports pollution_reports_reported_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mydb_kritdev_user
+--
+
+ALTER TABLE ONLY public.pollution_reports
+    ADD CONSTRAINT pollution_reports_reported_by_fkey FOREIGN KEY (reported_by) REFERENCES public.users(id);
+
+
+--
+-- TOC entry 3990 (class 0 OID 0)
+-- Dependencies: 6
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: pg_database_owner
+--
+
+GRANT USAGE ON SCHEMA public TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 3992 (class 0 OID 0)
+-- Dependencies: 230
+-- Name: TABLE active_communities; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON TABLE public.active_communities TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 3993 (class 0 OID 0)
+-- Dependencies: 229
+-- Name: TABLE activity_logs; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON TABLE public.activity_logs TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 3995 (class 0 OID 0)
+-- Dependencies: 228
+-- Name: SEQUENCE activity_logs_id_seq; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON SEQUENCE public.activity_logs_id_seq TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4000 (class 0 OID 0)
+-- Dependencies: 242
+-- Name: TABLE admin_actions; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON TABLE public.admin_actions TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4002 (class 0 OID 0)
+-- Dependencies: 241
+-- Name: SEQUENCE admin_actions_id_seq; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT SELECT,USAGE ON SEQUENCE public.admin_actions_id_seq TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4019 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: TABLE communities; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON TABLE public.communities TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4021 (class 0 OID 0)
+-- Dependencies: 220
+-- Name: SEQUENCE communities_id_seq; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON SEQUENCE public.communities_id_seq TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4022 (class 0 OID 0)
+-- Dependencies: 225
+-- Name: TABLE community_activities; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON TABLE public.community_activities TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4024 (class 0 OID 0)
+-- Dependencies: 224
+-- Name: SEQUENCE community_activities_id_seq; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON SEQUENCE public.community_activities_id_seq TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4025 (class 0 OID 0)
+-- Dependencies: 223
+-- Name: TABLE community_members; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON TABLE public.community_members TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4027 (class 0 OID 0)
+-- Dependencies: 222
+-- Name: SEQUENCE community_members_id_seq; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON SEQUENCE public.community_members_id_seq TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4028 (class 0 OID 0)
+-- Dependencies: 236
+-- Name: TABLE economic_data; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON TABLE public.economic_data TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4030 (class 0 OID 0)
+-- Dependencies: 235
+-- Name: SEQUENCE economic_data_id_seq; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT SELECT,USAGE ON SEQUENCE public.economic_data_id_seq TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4041 (class 0 OID 0)
+-- Dependencies: 238
+-- Name: TABLE ecosystem_services; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON TABLE public.ecosystem_services TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4043 (class 0 OID 0)
+-- Dependencies: 237
+-- Name: SEQUENCE ecosystem_services_id_seq; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT SELECT,USAGE ON SEQUENCE public.ecosystem_services_id_seq TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4044 (class 0 OID 0)
+-- Dependencies: 234
+-- Name: TABLE mangrove_areas; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON TABLE public.mangrove_areas TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4046 (class 0 OID 0)
+-- Dependencies: 233
+-- Name: SEQUENCE mangrove_areas_id_seq; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT SELECT,USAGE ON SEQUENCE public.mangrove_areas_id_seq TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4047 (class 0 OID 0)
+-- Dependencies: 227
+-- Name: TABLE photo_uploads; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON TABLE public.photo_uploads TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4049 (class 0 OID 0)
+-- Dependencies: 226
+-- Name: SEQUENCE photo_uploads_id_seq; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON SEQUENCE public.photo_uploads_id_seq TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4050 (class 0 OID 0)
+-- Dependencies: 240
+-- Name: TABLE pollution_reports; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON TABLE public.pollution_reports TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4052 (class 0 OID 0)
+-- Dependencies: 239
+-- Name: SEQUENCE pollution_reports_id_seq; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT SELECT,USAGE ON SEQUENCE public.pollution_reports_id_seq TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4053 (class 0 OID 0)
+-- Dependencies: 219
+-- Name: TABLE users; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON TABLE public.users TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4054 (class 0 OID 0)
+-- Dependencies: 231
+-- Name: TABLE upcoming_activities; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON TABLE public.upcoming_activities TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4055 (class 0 OID 0)
+-- Dependencies: 232
+-- Name: TABLE user_statistics; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON TABLE public.user_statistics TO mydb_kritdev_user;
+
+
+--
+-- TOC entry 4057 (class 0 OID 0)
+-- Dependencies: 218
+-- Name: SEQUENCE users_id_seq; Type: ACL; Schema: public; Owner: mydb_kritdev_user
+--
+
+GRANT ALL ON SEQUENCE public.users_id_seq TO mydb_kritdev_user;
+
+
+-- Completed on 2026-03-21 00:49:31 +07
+
+--
+-- mydb_kritdev_userQL database dump complete
+--
+

@@ -5,22 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 
 class ApiClient {
-  // Auto-detect: Use IP for real device, localhost for simulator/web
+  static const String _productionUrl = 'https://eastern-mangrove-app.onrender.com/api';
+
   static String get baseUrl {
-    // For web or development
-    const bool isWeb = bool.fromEnvironment('dart.library.js_util');
-    if (isWeb) {
-      return 'http://localhost:3002/api';
-    }
-    
-    // For iOS/Android real device - use Mac IP
-    // To find your Mac IP: ifconfig | grep "inet " | grep -v 127.0.0.1
-    if (Platform.isIOS || Platform.isAndroid) {
-      return 'http://192.168.1.42:3002/api';
-    }
-    
-    // Fallback to localhost
-    return 'http://localhost:3002/api';
+    return _productionUrl;
   }
   
   String? _token;
