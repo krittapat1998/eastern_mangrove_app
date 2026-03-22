@@ -74,9 +74,9 @@ app.use('/api/upload', authenticateToken, uploadRoutes);
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
-    error: 'Route not found',
-    path: req.originalUrl,
-    method: req.method
+    success: false,
+    error: 'API endpoint not found',
+    message: `Route ${req.originalUrl} does not exist`,
   });
 });
 

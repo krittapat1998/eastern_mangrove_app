@@ -2,275 +2,244 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { query, queryOne, transaction } = require('../config/database');
-const { userValidation, communityValidation } = require('../middleware/validation');
-const { asyncHandler, ValidationError, UnauthorizedError } = require('../middleware/errorHandler');
+const { asyncHandler } = require('../middleware/errorHandler');
 
 const router = express.Router();
+const SCHEMA = 'eastern_mangrove_communities';
 
-// Helper function to generate JWT token
+// Helper: generate JWT token
 function generateToken(user) {
   return jwt.sign(
-    {
-      userId: user.id,
-      username: user.username,
-      userType: user.user_type
-    },
+    { userId: user.id, email: user.email, userType: user.user_type },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
 }
 
-// Register endpoint
-router.post('/register', userValidation.register, asyncHandler(async (req, res) => {
-  const { username, email, password, user_type } = req.body;
+// Helper: format user for Flutter
+function formatUser(user) {
+  return {
+    id: user.id,
+    email: user.email,
+    firstName: user.first_name,
+    lastName: user.last_name,
+    userType: user.user_type,
+    phoneNumber: user.phone_number || null,
+    isActive: user.is_active,
+    isApproved: user.is_approved,
+  };
+}
 
-  // Check if user already exists
-  const existingUser = await queryOne(
-    'SELECT id FROM users WHERE username = $1 OR email = $2',
-    [username, email]
-  );
+// POST /api/auth/register
+router.post('/register', asyncHandler(async (req, res) => {
+  const { email, password, firstName, lastName, userType, phoneNumber } = req.body;
 
-  if (existingUser) {
-    throw new ValidationError('User already exists', [
-      { field: 'username', message: 'Username or email already taken' }
-    ]);
+  if (!email || !password || !firstName || !lastName || !userType) {
+    return res.status(400).json({ success: false, message: 'All required fields must be provided' });
   }
 
-  // Hash password
-  const saltRounds = 12;
-  const password_hash = await bcrypt.hash(password, saltRounds);
+  if (!['admin', 'community', 'public'].includes(userType)) {
+    return res.status(400).json({ success: false, message: 'Invalid user type' });
+  }
 
-  // Create user
+  const existing = await queryOne(
+    `SELECT id FROM ${SCHEMA}.users WHERE email = $1`,
+    [email.toLowerCase().trim()]
+  );
+  if (existing) {
+    return res.status(409).json({ success: false, message: 'Email is already registered' });
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
   const newUser = await queryOne(
-    `INSERT INTO users (username, email, password_hash, user_type) 
-     VALUES ($1, $2, $3, $4) 
-     RETURNING id, username, email, user_type, is_active, is_approved, created_at`,
-    [username, email, password_hash, user_type]
+    `INSERT INTO ${SCHEMA}.users (email, password_hash, first_name, last_name, user_type, phone_number, is_active, is_approved)
+     VALUES ($1, $2, $3, $4, $5, $6, true, $7) RETURNING *`,
+    [email.toLowerCase().trim(), passwordHash, firstName, lastName, userType, phoneNumber || null, userType === 'admin']
   );
 
-  res.status(201).json({
-    message: 'User registered successfully',
-    user: {
-      id: newUser.id,
-      username: newUser.username,
-      email: newUser.email,
-      user_type: newUser.user_type,
-      is_active: newUser.is_active,
-      is_approved: newUser.is_approved,
-      created_at: newUser.created_at
-    }
+  const token = generateToken(newUser);
+  return res.status(201).json({
+    success: true,
+    message: 'Registration successful',
+    data: { token, user: formatUser(newUser) },
   });
 }));
 
-// Community registration endpoint
-router.post('/register/community', communityValidation.register, asyncHandler(async (req, res) => {
+// POST /api/auth/register-community
+router.post('/register-community', asyncHandler(async (req, res) => {
   const {
-    username, email, password,
-    community_name, village_name, sub_district, district, province,
-    contact_person, phone, description, latitude, longitude
+    email, password, firstName, lastName, phoneNumber,
+    communityName, location, contactPerson, description,
+    establishedYear, memberCount,
   } = req.body;
 
-  // Use transaction to ensure data consistency
+  if (!email || !password || !firstName || !lastName || !communityName || !contactPerson) {
+    return res.status(400).json({ success: false, message: 'All required fields must be provided' });
+  }
+
+  const existing = await queryOne(
+    `SELECT id FROM ${SCHEMA}.users WHERE email = $1`,
+    [email.toLowerCase().trim()]
+  );
+  if (existing) {
+    return res.status(409).json({ success: false, message: 'Email is already registered' });
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+
   const result = await transaction(async (client) => {
-    // Check if user already exists
-    const existingUser = await client.query(
-      'SELECT id FROM users WHERE username = $1 OR email = $2',
-      [username, email]
+    const userResult = await client.query(
+      `INSERT INTO ${SCHEMA}.users (email, password_hash, first_name, last_name, user_type, phone_number, is_active, is_approved)
+       VALUES ($1, $2, $3, $4, 'community', $5, true, false) RETURNING *`,
+      [email.toLowerCase().trim(), passwordHash, firstName, lastName, phoneNumber || null]
     );
+    const user = userResult.rows[0];
 
-    if (existingUser.rows.length > 0) {
-      throw new ValidationError('User already exists', [
-        { field: 'username', message: 'Username or email already taken' }
-      ]);
-    }
-
-    // Hash password
-    const password_hash = await bcrypt.hash(password, 12);
-
-    // Create user
-    const newUser = await client.query(
-      `INSERT INTO users (username, email, password_hash, user_type) 
-       VALUES ($1, $2, $3, 'community') 
-       RETURNING id, username, email, user_type, is_active, is_approved, created_at`,
-      [username, email, password_hash]
+    const commResult = await client.query(
+      `INSERT INTO ${SCHEMA}.communities
+         (community_name, location, contact_person, phone_number, email, description, established_year, member_count, registration_status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending') RETURNING *`,
+      [communityName, location || '', contactPerson, phoneNumber || '', email.toLowerCase().trim(),
+       description || null, establishedYear || null, memberCount || null]
     );
-
-    const user = newUser.rows[0];
-
-    // Create community record
-    const newCommunity = await client.query(
-      `INSERT INTO communities (
-         user_id, community_name, village_name, sub_district, district, province,
-         contact_person, phone, description, latitude, longitude
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-       RETURNING id, community_name, registration_status, created_at`,
-      [
-        user.id, community_name, village_name, sub_district, district, province,
-        contact_person, phone, description, latitude, longitude
-      ]
-    );
-
-    const community = newCommunity.rows[0];
-
-    return { user, community };
+    return { user, community: commResult.rows[0] };
   });
 
-  res.status(201).json({
-    message: 'Community registration submitted successfully',
-    user: {
-      id: result.user.id,
-      username: result.user.username,
-      email: result.user.email,
-      user_type: result.user.user_type,
-      is_active: result.user.is_active,
-      is_approved: result.user.is_approved,
-      created_at: result.user.created_at
+  return res.status(201).json({
+    success: true,
+    message: 'Community registration submitted. Awaiting admin approval.',
+    data: {
+      user: formatUser(result.user),
+      community: {
+        id: result.community.id,
+        name: result.community.community_name,
+        registrationStatus: result.community.registration_status,
+      },
     },
-    community: {
-      id: result.community.id,
-      name: result.community.community_name,
-      registration_status: result.community.registration_status,
-      created_at: result.community.created_at
-    }
   });
 }));
 
-// Login endpoint
-router.post('/login', userValidation.login, asyncHandler(async (req, res) => {
-  const { username, password } = req.body;
+// POST /api/auth/login
+router.post('/login', asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
 
-  // Find user by username or email
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: 'Email and password are required' });
+  }
+
   const user = await queryOne(
-    'SELECT id, username, email, password_hash, user_type, is_active, is_approved FROM users WHERE username = $1 OR email = $1',
-    [username]
+    `SELECT * FROM ${SCHEMA}.users WHERE email = $1`,
+    [email.toLowerCase().trim()]
   );
 
   if (!user) {
-    throw new UnauthorizedError('Invalid username or password');
+    return res.status(401).json({ success: false, message: 'Invalid email or password' });
   }
 
-  // Check password
-  const isValidPassword = await bcrypt.compare(password, user.password_hash);
-  if (!isValidPassword) {
-    throw new UnauthorizedError('Invalid username or password');
+  const isValid = await bcrypt.compare(password, user.password_hash);
+  if (!isValid) {
+    return res.status(401).json({ success: false, message: 'Invalid email or password' });
   }
 
-  // Check if user is active
   if (!user.is_active) {
-    throw new UnauthorizedError('Account has been deactivated');
+    return res.status(403).json({ success: false, message: 'Account has been deactivated' });
   }
 
-  // For non-admin users, check if approved
   if (user.user_type !== 'admin' && !user.is_approved) {
     return res.status(403).json({
-      error: 'Account not approved',
+      success: false,
       message: 'Your account is pending admin approval',
-      user_type: user.user_type
+      userType: user.user_type,
     });
   }
 
-  // Generate token
   const token = generateToken(user);
+  await query(`UPDATE ${SCHEMA}.users SET last_login = NOW() WHERE id = $1`, [user.id]);
 
-  // Get additional info based on user type
-  let additionalData = {};
-  
-  if (user.user_type === 'community') {
-    const community = await queryOne(
-      'SELECT id, community_name, registration_status FROM communities WHERE user_id = $1',
-      [user.id]
-    );
-    additionalData.community = community;
-  }
-
-  res.json({
+  return res.json({
+    success: true,
     message: 'Login successful',
-    token,
-    user: {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      user_type: user.user_type,
-      is_active: user.is_active,
-      is_approved: user.is_approved
-    },
-    ...additionalData
+    data: { token, user: formatUser(user) },
   });
 }));
 
-// Refresh token endpoint
-router.post('/refresh', asyncHandler(async (req, res) => {
+// GET /api/auth/profile
+router.get('/profile', asyncHandler(async (req, res) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ success: false, message: 'Authentication required' });
 
-  if (!token) {
-    throw new UnauthorizedError('Refresh token required');
-  }
+  let decoded;
+  try { decoded = jwt.verify(token, process.env.JWT_SECRET); }
+  catch { return res.status(401).json({ success: false, message: 'Invalid or expired token' }); }
+
+  const user = await queryOne(`SELECT * FROM ${SCHEMA}.users WHERE id = $1`, [decoded.userId]);
+  if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+  return res.json({ success: true, data: formatUser(user) });
+}));
+
+// PUT /api/auth/profile
+router.put('/profile', asyncHandler(async (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ success: false, message: 'Authentication required' });
+
+  let decoded;
+  try { decoded = jwt.verify(token, process.env.JWT_SECRET); }
+  catch { return res.status(401).json({ success: false, message: 'Invalid or expired token' }); }
+
+  const { firstName, lastName, phoneNumber } = req.body;
+  const updated = await queryOne(
+    `UPDATE ${SCHEMA}.users SET first_name = COALESCE($1, first_name), last_name = COALESCE($2, last_name),
+     phone_number = COALESCE($3, phone_number), updated_at = NOW() WHERE id = $4 RETURNING *`,
+    [firstName || null, lastName || null, phoneNumber || null, decoded.userId]
+  );
+  return res.json({ success: true, message: 'Profile updated', data: formatUser(updated) });
+}));
+
+// POST /api/auth/change-password
+router.post('/change-password', asyncHandler(async (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ success: false, message: 'Authentication required' });
+
+  let decoded;
+  try { decoded = jwt.verify(token, process.env.JWT_SECRET); }
+  catch { return res.status(401).json({ success: false, message: 'Invalid or expired token' }); }
+
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword)
+    return res.status(400).json({ success: false, message: 'Current and new password required' });
+
+  const user = await queryOne(`SELECT * FROM ${SCHEMA}.users WHERE id = $1`, [decoded.userId]);
+  const isValid = await bcrypt.compare(currentPassword, user.password_hash);
+  if (!isValid) return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+
+  const newHash = await bcrypt.hash(newPassword, 12);
+  await query(`UPDATE ${SCHEMA}.users SET password_hash = $1, updated_at = NOW() WHERE id = $2`, [newHash, decoded.userId]);
+  return res.json({ success: true, message: 'Password changed successfully' });
+}));
+
+// GET /api/auth/verify-token
+router.get('/verify-token', asyncHandler(async (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ success: false, message: 'No token provided' });
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Get fresh user data
-    const user = await queryOne(
-      'SELECT id, username, email, user_type, is_active, is_approved FROM users WHERE id = $1',
-      [decoded.userId]
-    );
-
-    if (!user || !user.is_active) {
-      throw new UnauthorizedError('User not found or inactive');
-    }
-
-    // Generate new token
-    const newToken = generateToken(user);
-
-    res.json({
-      message: 'Token refreshed successfully',
-      token: newToken,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        user_type: user.user_type,
-        is_active: user.is_active,
-        is_approved: user.is_approved
-      }
-    });
-  } catch (err) {
-    if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
-      throw new UnauthorizedError('Invalid or expired token');
-    }
-    throw err;
+    const user = await queryOne(`SELECT id FROM ${SCHEMA}.users WHERE id = $1 AND is_active = true`, [decoded.userId]);
+    if (!user) return res.status(401).json({ success: false, message: 'User not found or inactive' });
+    return res.json({ success: true, message: 'Token is valid' });
+  } catch {
+    return res.status(401).json({ success: false, message: 'Invalid or expired token' });
   }
 }));
 
-// Check username availability
-router.get('/check-username/:username', asyncHandler(async (req, res) => {
-  const { username } = req.params;
-
-  const existingUser = await queryOne(
-    'SELECT id FROM users WHERE username = $1',
-    [username]
-  );
-
-  res.json({
-    available: !existingUser,
-    message: existingUser ? 'Username is already taken' : 'Username is available'
-  });
-}));
-
-// Check email availability
-router.get('/check-email/:email', asyncHandler(async (req, res) => {
-  const { email } = req.params;
-
-  const existingUser = await queryOne(
-    'SELECT id FROM users WHERE email = $1',
-    [email]
-  );
-
-  res.json({
-    available: !existingUser,
-    message: existingUser ? 'Email is already registered' : 'Email is available'
-  });
+// POST /api/auth/logout
+router.post('/logout', asyncHandler(async (req, res) => {
+  return res.json({ success: true, message: 'Logged out successfully' });
 }));
 
 module.exports = router;

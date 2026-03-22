@@ -18,7 +18,7 @@ async function authenticateToken(req, res, next) {
     
     // Verify user still exists and is active
     const user = await queryOne(
-      'SELECT id, username, email, user_type, is_active, is_approved FROM users WHERE id = $1',
+      `SELECT id, email, first_name, last_name, user_type, is_active, is_approved FROM eastern_mangrove_communities.users WHERE id = $1`,
       [decoded.userId]
     );
 
