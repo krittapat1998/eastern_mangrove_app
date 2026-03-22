@@ -96,7 +96,7 @@ app.get('/api/health', async (req, res) => {
     res.status(500).json({
       status: 'ERROR',
       message: 'Database connection failed',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      error: error.message
     });
   }
 });
@@ -127,7 +127,7 @@ app.use((error, req, res, next) => {
   console.error('API Error:', error);
   res.status(error.status || 500).json({
     error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+    message: error.message
   });
 });
 
