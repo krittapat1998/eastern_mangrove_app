@@ -505,7 +505,7 @@ class _EcosystemServicesImprovedScreenState extends State<EcosystemServicesImpro
               _buildInfoRow(
                 Icons.calendar_today,
                 'เดือน/ปี',
-                '${_getThaiMonthName(_parseInt(service[\'month\']))} ${service[\'year\']}',
+                '${_getThaiMonthName(_parseInt(service["month"]))} ${service["year"]}',
               ),
             ],
           ),
