@@ -1,14 +1,19 @@
 const { Pool } = require('pg');
 
 // Create PostgreSQL connection pool
+const isProduction = process.env.NODE_ENV === 'production';
+
 const poolConfig = {
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
+  ssl: isProduction ? { rejectUnauthorized: false } : false,
   max: 20, // maximum number of connections in the pool
   idleTimeoutMillis: 30000, // close connections after 30 seconds of inactivity
-  connectionTimeoutMillis: 2000, // return an error after 2 seconds if connection could not be established
+  connectionTimeoutMillis: 10000, // return an error after 10 seconds if connection could not be established
+  // Set default search_path so all queries find tables in eastern_mangrove_communities schema
+  options: '-c search_path=eastern_mangrove_communities,public',
 };
 
 // Only add password if it exists and is not empty
