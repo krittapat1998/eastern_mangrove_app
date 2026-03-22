@@ -413,7 +413,11 @@ class _EcosystemServicesImprovedScreenState extends State<EcosystemServicesImpro
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                service['service_name'] ?? 'ไม่มีชื่อ',
+                                () {
+                                  final raw = service['service_name']?.toString() ?? 'ไม่มีชื่อ';
+                                  final translated = _getServiceTypeName(raw);
+                                  return (translated != raw) ? translated : raw;
+                                }(),
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,

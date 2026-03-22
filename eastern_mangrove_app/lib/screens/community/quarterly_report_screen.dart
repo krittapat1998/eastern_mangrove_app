@@ -629,7 +629,10 @@ class _QuarterlyReportScreenState extends State<QuarterlyReportScreen> with Sing
   }
 
   Widget _buildServiceItem(Map<String, dynamic> service) {
-    final serviceName = service['service_name']?.toString() ?? 'ไม่ระบุชื่อ';
+    final rawName = service['service_name']?.toString() ?? 'ไม่ระบุชื่อ';
+    // If service_name was stored in English (e.g. 'shrimp'), translate it to Thai
+    final translated = _translateServiceType(rawName);
+    final serviceName = (translated != rawName) ? translated : rawName;
     final category = _translateCategory(service['category']?.toString());
     final economicValue = _parseDouble(service['economic_value']);
     final quantity = _parseDouble(service['quantity']);
