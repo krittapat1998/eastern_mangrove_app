@@ -157,9 +157,9 @@ router.post('/register-community', validate(schemas.communityRegistration), asyn
       photoType
     } = req.body;
 
-    // Check if community already exists
+    // Check if community already exists AND has been approved
     const existingCommunity = await db.query(
-      'SELECT community_name FROM communities WHERE community_name = $1 OR email = $2',
+      "SELECT community_name FROM communities WHERE (community_name = $1 OR email = $2) AND registration_status = 'approved'",
       [communityName, email]
     );
 
@@ -167,13 +167,13 @@ router.post('/register-community', validate(schemas.communityRegistration), asyn
       return res.status(409).json({
         success: false,
         error: 'ลงทะเบียนไม่สำเร็จ',
-        message: 'มีชุมชนที่ใช้ชื่อหรืออีเมลนี้อยู่แล้ว กรุณาใช้ชื่อหรืออีเมลอื่น'
+        message: 'มีชุมชนที่ใช้ชื่อหรืออีเมลนี้ผ่านการอนุมัติแล้ว กรุณาใช้ชื่อหรืออีเมลอื่น'
       });
     }
 
-    // Check if user with this email already exists
+    // Check if an active (approved) user with this email already exists
     const existingUser = await db.query(
-      'SELECT email FROM users WHERE email = $1',
+      'SELECT email FROM users WHERE email = $1 AND is_active = true',
       [email]
     );
 
@@ -181,9 +181,20 @@ router.post('/register-community', validate(schemas.communityRegistration), asyn
       return res.status(409).json({
         success: false,
         error: 'ลงทะเบียนไม่สำเร็จ',
-        message: 'มีผู้ใช้งานที่ใช้อีเมลนี้อยู่แล้ว กรุณาใช้อีเมลอื่น'
+        message: 'มีผู้ใช้งานที่ใช้อีเมลนี้ได้รับการอนุมัติแล้ว กรุณาใช้อีเมลอื่น'
       });
     }
+
+    // Remove any previous pending/rejected registration with the same email or community name
+    // before inserting a new one to keep data clean
+    await db.query(
+      "DELETE FROM users WHERE email = $1 AND is_active = false",
+      [email]
+    );
+    await db.query(
+      "DELETE FROM communities WHERE (community_name = $1 OR email = $2) AND registration_status IN ('pending', 'rejected')",
+      [communityName, email]
+    );
 
     // Hash password
     const saltRounds = 12;
