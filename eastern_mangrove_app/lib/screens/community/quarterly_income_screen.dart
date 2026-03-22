@@ -269,7 +269,7 @@ class _QuarterlyIncomeScreenState extends State<QuarterlyIncomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Q$quarter/$year',
+                    'ไตรมาส $quarter/$year',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,

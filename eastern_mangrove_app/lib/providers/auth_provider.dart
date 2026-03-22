@@ -101,11 +101,11 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _setError(response.error ?? 'Login failed');
+        _setError(response.error ?? 'เข้าสู่ระบบไม่สำเร็จ');
         return false;
       }
     } catch (e) {
-      _setError('Network error: $e');
+      _setError('เกิดข้อผิดพลาดในการเชื่อมต่อ: $e');
       return false;
     } finally {
       _setLoading(false);
@@ -148,11 +148,11 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _setError(response.error ?? 'Community registration failed');
+        _setError(response.error ?? 'ลงทะเบียนชุมชนไม่สำเร็จ');
         return false;
       }
     } catch (e) {
-      _setError('Network error: $e');
+      _setError('เกิดข้อผิดพลาดในการเชื่อมต่อ: $e');
       return false;
     } finally {
       _setLoading(false);
@@ -200,11 +200,11 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _setError(response.error ?? 'Registration failed');
+        _setError(response.error ?? 'ลงทะเบียนไม่สำเร็จ');
         return false;
       }
     } catch (e) {
-      _setError('Network error: $e');
+      _setError('เกิดข้อผิดพลาดในการเชื่อมต่อ: $e');
       return false;
     } finally {
       _setLoading(false);
@@ -236,7 +236,7 @@ class AuthProvider with ChangeNotifier {
     try {
       await _logout();
     } catch (e) {
-      _setError('Logout failed: $e');
+      _setError('ออกจากระบบไม่สำเร็จ: $e');
     } finally {
       _setLoading(false);
     }

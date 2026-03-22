@@ -82,7 +82,7 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
           
           final errorMsg = response.error ?? response.message;
           final displayMsg = errorMsg.contains('Token') 
-              ? 'กรุณา Login ใหม่ (Token หมดอายุ)'
+              ? 'กรุณาเข้าสู่ระบบใหม่ (เซสชันหมดอายุ)'
               : 'ไม่สามารถโหลดข้อมูล: $errorMsg';
           
           ScaffoldMessenger.of(context).showSnackBar(
@@ -337,7 +337,7 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'ID: ${communityId ?? "N/A"}',
+                          'รหัส: ${communityId ?? "-"}',
                           style: const TextStyle(
                             fontSize: 12,
                             color: Color(0xFF95A5A6),
@@ -729,7 +729,7 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildDetailRow('ID', community['id']?.toString()),
+              _buildDetailRow('รหัส', community['id']?.toString()),
               _buildDetailRow('ชื่อชุมชน', community['community_name']),
               _buildDetailRow('ที่อยู่', community['location']),
               _buildDetailRow('ผู้ติดต่อ', community['contact_person']),
@@ -1081,11 +1081,11 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
                             children: [
                               Icon(isTokenError ? Icons.lock_outline : Icons.error_outline, color: isTokenError ? Colors.orange : Colors.red),
                               const SizedBox(width: 8),
-                              Text(isTokenError ? 'Session หมดอายุ' : 'เกิดข้อผิดพลาด'),
+                              Text(isTokenError ? 'เซสชันหมดอายุ' : 'เกิดข้อผิดพลาด'),
                             ],
                           ),
                           content: Text(isTokenError
-                              ? 'กรุณา Logout แล้ว Login ใหม่\n(Session หมดอายุ)'
+                              ? 'กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่\n(เซสชันหมดอายุ)'
                               : (checkResponse.error ?? 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล')),
                           actions: [
                             TextButton(
@@ -1241,13 +1241,13 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
           
           String displayMsg;
           if (errorMsg.contains('Token') || errorMsg.contains('Unauthorized') || errorMsg.contains('401')) {
-            displayMsg = '🔒 กรุณา Logout แล้ว Login ใหม่\n(Token หมดอายุ)';
+            displayMsg = '🔒 กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่\n(เซสชันหมดอายุ)';
           } else if (errorMsg.contains('มีชุมชนที่ใช้ชื่อหรืออีเมลนี้อยู่แล้ว') || errorMsg.contains('Duplicate')) {
             displayMsg = '⚠️ ชื่อชุมชนหรืออีเมลนี้ถูกใช้แล้ว\nกรุณาเปลี่ยนใหม่';
           } else if (errorMsg.contains('Connection') || errorMsg.contains('Network') || errorMsg.contains('Failed host lookup')) {
-            displayMsg = '📡 ไม่สามารถเชื่อมต่อ API Server\nตรวจสอบ WiFi หรือ Network';
+            displayMsg = '📡 ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์\nกรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต';
           } else if (errorMsg.contains('SocketException')) {
-            displayMsg = '🔌 ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์\nกรุณาตรวจสอบ:\n• iPhone เชื่อม WiFi เดียวกับ Mac\n• API Server ทำงานอยู่';
+            displayMsg = '🔌 ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์\nกรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต';
           } else {
             displayMsg = '❌ เกิดข้อผิดพลาด:\n$errorMsg';
           }
@@ -1273,9 +1273,9 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
         
         String displayMsg;
         if (e.toString().contains('SocketException')) {
-          displayMsg = '🔌 ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์\n\nกรุณาตรวจสอบ:\n✓ iPhone เชื่อม WiFi เดียวกับ Mac\n✓ API Server ทำงานที่ 192.168.1.38:3002';
+          displayMsg = '🔌 ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์\n\nกรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต';
         } else if (e.toString().contains('FormatException')) {
-          displayMsg = '⚠️ ข้อมูลจาก API ไม่ถูกต้อง\nกรุณาติดต่อผู้ดูแลระบบ';
+          displayMsg = '⚠️ รูปแบบข้อมูลไม่ถูกต้อง\nกรุณาติดต่อผู้ดูแลระบบ';
         } else {
           displayMsg = '❌ เกิดข้อผิดพลาด:\n${e.toString()}';
         }
@@ -1448,7 +1448,7 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('ข้อผิดพลาด: ไม่พบ ID ของชุมชน'),
+            content: Text('ข้อผิดพลาด: ไม่พบรหัสชุมชน'),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 3),
           ),
@@ -1541,7 +1541,7 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('ข้อผิดพลาด: ไม่พบ ID'),
+            content: Text('ข้อผิดพลาด: ไม่พบรหัส'),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 3),
           ),
@@ -1668,7 +1668,7 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('ข้อผิดพลาด: ไม่พบ ID ของชุมชน'),
+            content: Text('ข้อผิดพลาด: ไม่พบรหัสชุมชน'),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 3),
           ),
