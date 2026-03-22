@@ -398,6 +398,26 @@ class _RegistrationApprovalScreenState extends State<RegistrationApprovalScreen>
 
             const SizedBox(height: 16),
 
+            // Detail + Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showDetailSheet(community),
+                    icon: const Icon(Icons.info_outline),
+                    label: const Text('ดูรายละเอียด'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF2E7D32),
+                      side: const BorderSide(color: Color(0xFF2E7D32)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+
             // Action Buttons
             Row(
               children: [
@@ -430,6 +450,213 @@ class _RegistrationApprovalScreenState extends State<RegistrationApprovalScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showDetailSheet(Map<String, dynamic> community) {
+    final String communityName = community['community_name'] ?? 'ไม่ระบุชื่อ';
+    final String location = community['location'] ?? '-';
+    final String contactPerson = community['contact_person'] ?? '-';
+    final String phoneNumber = community['phone_number'] ?? '-';
+    final String email = community['email'] ?? '-';
+    final String? description = community['description'];
+    final String? username = community['username'];
+    final String? establishedYear = community['established_year']?.toString();
+    final String? memberCount = community['member_count']?.toString();
+    final String createdAt = community['created_at'] != null
+        ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(community['created_at']))
+        : '-';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Title
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.groups, color: Colors.orange, size: 28),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            communityName,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'ส่งคำขอเมื่อ: $createdAt',
+                            style: const TextStyle(fontSize: 13, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const Divider(height: 32),
+
+                // Section: ข้อมูลชุมชน
+                _buildSheetSection('ข้อมูลชุมชน', Icons.location_city, [
+                  _buildSheetRow(Icons.location_on, 'ที่ตั้ง', location),
+                  if (establishedYear != null)
+                    _buildSheetRow(Icons.calendar_today, 'ปีที่ก่อตั้ง', establishedYear),
+                  if (memberCount != null)
+                    _buildSheetRow(Icons.group, 'จำนวนสมาชิก', '$memberCount คน'),
+                  if (description != null && description.isNotEmpty)
+                    _buildSheetRow(Icons.notes, 'รายละเอียด', description),
+                ]),
+
+                const SizedBox(height: 16),
+
+                // Section: ข้อมูลติดต่อ
+                _buildSheetSection('ข้อมูลติดต่อ', Icons.contact_phone, [
+                  _buildSheetRow(Icons.person, 'ผู้ติดต่อ', contactPerson),
+                  _buildSheetRow(Icons.phone, 'เบอร์โทร', phoneNumber),
+                  _buildSheetRow(Icons.email, 'อีเมล', email),
+                  if (username != null)
+                    _buildSheetRow(Icons.account_circle, 'ชื่อผู้ใช้', username),
+                ]),
+
+                const SizedBox(height: 32),
+
+                // Approve / Reject Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _rejectCommunity(community);
+                        },
+                        icon: const Icon(Icons.close),
+                        label: const Text('ปฏิเสธ'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _approveCommunity(community);
+                        },
+                        icon: const Icon(Icons.check),
+                        label: const Text('อนุมัติ'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSheetSection(String title, IconData icon, List<Widget> children) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: const Color(0xFF2E7D32)),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2E7D32),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 16),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSheetRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: Colors.grey.shade600),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 90,
+            child: Text(
+              '$label:',
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 13, color: Colors.black87),
+            ),
+          ),
+        ],
       ),
     );
   }

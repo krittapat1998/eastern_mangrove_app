@@ -29,19 +29,9 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
   final _confirmPasswordController = TextEditingController();
   final _descriptionController = TextEditingController();
 
-  List<String> _selectedDocuments = [];
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-
-  final List<String> _availableDocuments = [
-    'หนังสือจัดตั้งชุมชน',
-    'หลักฐานพื้นที่',
-    'ใบประกอบการ',
-    'โครงการอนุรักษ์',
-    'แผนที่พื้นที่',
-    'รายชื่อสมาชิก',
-  ];
 
   final List<String> _provinces = [
     'ชลบุรี',
@@ -101,9 +91,9 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Row(
                         children: [
-                          for (int i = 0; i < 3; i++) ...[
+                          for (int i = 0; i < 2; i++) ...[
                             _buildStepIndicator(i),
-                            if (i < 2) _buildStepConnector(i),
+                            if (i < 1) _buildStepConnector(i),
                           ],
                         ],
                       ),
@@ -135,7 +125,6 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
                       children: [
                         _buildStep1(), // ข้อมูลชุมชน
                         _buildStep2(), // ข้อมูลติดต่อและบัญชี
-                        _buildStep3(), // เอกสารและยืนยัน
                       ],
                     ),
                   ),
@@ -183,7 +172,7 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
                                 strokeWidth: 2,
                               ),
                             )
-                          : Text(_currentStep == 2 ? 'ส่งคำขอ' : 'ถัดไป'),
+                          : Text(_currentStep == 1 ? 'ส่งคำขอ' : 'ถัดไป'),
                       ),
                     ),
                   ],
@@ -631,166 +620,6 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
     );
   }
 
-  Widget _buildStep3() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'เอกสารและยืนยันข้อมูล',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.orange,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'เลือกเอกสารประกอบและตรวจสอบข้อมูล',
-            style: TextStyle(
-              fontSize: 16,
-              color: Color(0xFF757575),
-            ),
-          ),
-          const SizedBox(height: 24),
-          
-          // Documents Section
-          const Text(
-            'เอกสารประกอบ',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'เลือกเอกสารที่ชุมชนของคุณมี (จะต้องยื่นจริงภายหลัง)',
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF757575),
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          // Document Checkboxes
-          ...(_availableDocuments.map((doc) => CheckboxListTile(
-            title: Text(doc),
-            value: _selectedDocuments.contains(doc),
-            activeColor: Colors.orange,
-            onChanged: (value) {
-              setState(() {
-                if (value == true) {
-                  _selectedDocuments.add(doc);
-                } else {
-                  _selectedDocuments.remove(doc);
-                }
-              });
-            },
-          )).toList()),
-          
-          const SizedBox(height: 32),
-          
-          // Summary Section
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'สรุปข้อมูล',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildSummaryRow('ชื่อชุมชน', _communityNameController.text),
-                _buildSummaryRow('ที่ตั้ง', '${_villageNameController.text}, ตำบล${_subDistrictController.text}'),
-                _buildSummaryRow('จังหวัด', _provinceController.text),
-                _buildSummaryRow('ผู้ติดต่อ', _contactPersonController.text),
-                _buildSummaryRow('โทร', _phoneController.text),
-                _buildSummaryRow('อีเมล', _emailController.text),
-                _buildSummaryRow('ชื่อผู้ใช้', _usernameController.text),
-                _buildSummaryRow('เอกสาร', '${_selectedDocuments.length} รายการ'),
-              ],
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Terms and Conditions
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.orange.withOpacity(0.3)),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'เงื่อนไขและข้อตกลง',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  '• คำขอลงทะเบียนจะต้องผ่านการอนุมัติจากเจ้าหน้าที่\n'
-                  '• ข้อมูลที่กรอกต้องเป็นความจริงและสามารถตรวจสอบได้\n'
-                  '• เอกสารประกอบต้องส่งให้เจ้าหน้าที่ภายใน 7 วัน\n'
-                  '• ชุมชนต้องมีส่วนเกี่ยวข้องกับป่าชายเลนในภาคตะวันออก',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF424242),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryRow(String label, String value) {
-    if (value.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              '$label:',
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF757575),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                color: Color(0xFF212121),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _nextStep() {
     print('📝 _nextStep called, current step: $_currentStep');
     
@@ -817,20 +646,13 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
         curve: Curves.easeInOut,
       );
     } else if (_currentStep == 1) {
-      // Validate Step 2
+      // Validate Step 2 then submit
       print('📋 Validating Step 2...');
       if (!_formKey.currentState!.validate()) {
         print('❌ Step 2 validation failed');
         return;
       }
-      print('✅ Step 2 validation passed, moving to next page');
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    } else if (_currentStep == 2) {
-      // Submit registration
-      print('🚀 Calling _submitRegistration()');
+      print('✅ Step 2 validation passed, submitting...');
       _submitRegistration();
     }
   }
