@@ -186,11 +186,25 @@ router.post('/register-community', validate(schemas.communityRegistration), asyn
     }
 
     // Remove any previous pending/rejected registration with the same email or community name
-    // before inserting a new one to keep data clean
-    await db.query(
-      "DELETE FROM users WHERE email = $1 AND is_active = false",
-      [email]
+    // Find old communities first so we can also delete their linked orphan users
+    const oldCommunities = await db.query(
+      "SELECT email FROM communities WHERE (community_name = $1 OR email = $2) AND registration_status IN ('pending', 'rejected')",
+      [communityName, email]
     );
+
+    // Collect all emails from old community records (may differ from the new email)
+    const oldEmails = oldCommunities.rows.map(r => r.email);
+    if (!oldEmails.includes(email)) oldEmails.push(email); // always include current email
+
+    // Delete orphan users linked to any of those emails (inactive = not yet approved)
+    if (oldEmails.length > 0) {
+      await db.query(
+        `DELETE FROM users WHERE email = ANY($1::text[]) AND is_active = false`,
+        [oldEmails]
+      );
+    }
+
+    // Delete old pending/rejected community records
     await db.query(
       "DELETE FROM communities WHERE (community_name = $1 OR email = $2) AND registration_status IN ('pending', 'rejected')",
       [communityName, email]
