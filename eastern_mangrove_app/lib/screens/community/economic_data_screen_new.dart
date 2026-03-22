@@ -380,7 +380,7 @@ class _EconomicDataScreenNewState extends State<EconomicDataScreenNew> {
                       child: _buildDropdownField(
                         'จังหวัด *',
                         _provinceController.text,
-                        ['ชลบุรี', 'สัตหีบ', 'ระยอง', 'จันทบุรี', 'ตราด', 'สมุทรปราการ', 'สมุทรสาคร'],
+                        ['ชลบุรี', 'ระยอง', 'จันทบุรี', 'ตราด', 'ฉะเชิงเทรา', 'ปราจีนบุรี', 'สระแก้ว'],
                         (value) => setState(() => _provinceController.text = value!),
                       ),
                     ),

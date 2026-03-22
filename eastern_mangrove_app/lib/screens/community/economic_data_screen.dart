@@ -34,7 +34,7 @@ class _EconomicDataScreenState extends State<EconomicDataScreen>
       villageName: 'บ้านปลา',
       subDistrict: 'ธนาคารปู',
       district: 'วัดบน',
-      province: 'ระเอง',
+      province: 'ระยอง',
       areaSize: 250.5,
       totalPopulation: 324,
       resourceDependentPopulation: 180,
@@ -149,7 +149,7 @@ class _EconomicDataScreenState extends State<EconomicDataScreen>
                       child: _buildDropdownField(
                         'จังหวัด *',
                         _provinceController.text,
-                        ['ระเอง', 'สัตหีบ', 'ระยอง', 'จันทบุรี', 'ตราด'],
+                        ['ชลบุรี', 'ระยอง', 'จันทบุรี', 'ตราด', 'ฉะเชิงเทรา', 'ปราจีนบุรี', 'สระแก้ว'],
                         (value) => setState(() => _provinceController.text = value!),
                       ),
                     ),

@@ -44,11 +44,13 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
   ];
 
   final List<String> _provinces = [
-    'ระเอง',
-    'สัตหีบ', 
+    'ชลบุรี',
     'ระยอง',
     'จันทบุรี',
     'ตราด',
+    'ฉะเชิงเทรา',
+    'ปราจีนบุรี',
+    'สระแก้ว',
   ];
 
   @override
