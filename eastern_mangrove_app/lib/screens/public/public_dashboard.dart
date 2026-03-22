@@ -1479,7 +1479,7 @@ class _PublicDashboardState extends State<PublicDashboard>
   }
 
   String _translateServiceType(String? type) {
-    switch (type) {
+    switch (type?.toLowerCase()) {
       case 'tour_guide':
         return 'ไกด์นำเที่ยว';
       case 'seminar':
@@ -1487,15 +1487,29 @@ class _PublicDashboardState extends State<PublicDashboard>
       case 'learning_camp':
         return 'ค่ายเรียนรู้';
       case 'firewood':
-        return 'เก็บฟืน/ไม้';
+        return 'ฟืน/ไม้';
+      case 'wood':
+        return 'ไม้';
       case 'crab':
-        return 'จับสัตว์น้ำ';
+        return 'ปู';
+      case 'shrimp':
+        return 'กุ้ง';
+      case 'fish':
+        return 'ปลา';
+      case 'shellfish':
+        return 'หอย/สัตว์น้ำ';
+      case 'medicinal_plants':
+        return 'พืชสมุนไพร';
+      case 'other_resource':
+        return 'ทรัพยากรอื่นๆ';
       case 'ecotourism':
         return 'ท่องเที่ยวเชิงนิเวศ';
       case 'education':
         return 'สื่อการศึกษา';
       case 'recreation':
         return 'นันทนาการ';
+      case 'homestay':
+        return 'โฮมสเตย์';
       default:
         return type ?? 'อื่นๆ';
     }
@@ -1505,9 +1519,9 @@ class _PublicDashboardState extends State<PublicDashboard>
 
   String _formatNumber(double value) {
     if (value >= 1000000) {
-      return '${(value / 1000000).toStringAsFixed(1)}M';
+      return '${(value / 1000000).toStringAsFixed(1)} ล้าน';
     } else if (value >= 1000) {
-      return '${(value / 1000).toStringAsFixed(1)}K';
+      return '${(value / 1000).toStringAsFixed(1)} พัน';
     }
     return value.toStringAsFixed(0);
   }
