@@ -55,6 +55,14 @@ class _EcosystemServicesImprovedScreenState extends State<EcosystemServicesImpro
     return 0.0;
   }
 
+  int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
   Future<void> _loadServices() async {
     print('📥 Loading ecosystem services...');
     setState(() {
@@ -493,7 +501,7 @@ class _EcosystemServicesImprovedScreenState extends State<EcosystemServicesImpro
               _buildInfoRow(
                 Icons.calendar_today,
                 'เดือน/ปี',
-                '${service['month']}/${service['year']}',
+                '${_getThaiMonthName(_parseInt(service[\'month\']))} ${service[\'year\']}',
               ),
             ],
           ),
@@ -532,6 +540,7 @@ class _EcosystemServicesImprovedScreenState extends State<EcosystemServicesImpro
   }
 
   String _getServiceTypeName(String? type) {
+    if (type == null) return 'ไม่ระบุ';
     // Check resource types first
     for (var entry in _resourceTypes.entries) {
       if (entry.value == type) return entry.key;
@@ -540,15 +549,51 @@ class _EcosystemServicesImprovedScreenState extends State<EcosystemServicesImpro
     for (var entry in _activityTypes.entries) {
       if (entry.value == type) return entry.key;
     }
-    return type ?? 'ไม่ระบุ';
+    // Fallback translation for any remaining English types
+    switch (type.toLowerCase()) {
+      case 'wood': return 'ไม้';
+      case 'medicinal_plants': return 'พืชสมุนไพร';
+      case 'homestay': return 'โฮมสเตย์';
+      case 'workshop': return 'การอบรม';
+      case 'ecotourism': return 'ท่องเที่ยวเชิงนิเวศ';
+      case 'education': return 'การศึกษา';
+      case 'recreation': return 'นันทนาการ';
+      case 'other': return 'อื่นๆ';
+      default: return type;
+    }
+  }
+
+  String _translateUnit(String? unit) {
+    if (unit == null || unit.isEmpty) return '';
+    switch (unit.toLowerCase()) {
+      case 'kg': return 'กก.';
+      case 'ton': return 'ตัน';
+      case 'piece': return 'ชิ้น';
+      case 'bundle': return 'มัด';
+      case 'person': return 'คน';
+      case 'group': return 'กลุ่ม';
+      case 'trip': return 'ครั้ง';
+      case 'day': return 'วัน';
+      case 'night': return 'คืน';
+      default: return unit;
+    }
+  }
+
+  String _getThaiMonthName(int month) {
+    const months = [
+      '', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
+      'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
+    ];
+    if (month >= 1 && month <= 12) return months[month];
+    return month.toString();
   }
 
   String _formatNumber(dynamic value) {
     final num = _parseDouble(value);
     if (num >= 1000000) {
-      return '${(num / 1000000).toStringAsFixed(2)}M';
+      return '${(num / 1000000).toStringAsFixed(2)} ล้าน';
     } else if (num >= 1000) {
-      return '${(num / 1000).toStringAsFixed(2)}K';
+      return '${(num / 1000).toStringAsFixed(2)} พัน';
     }
     return num.toStringAsFixed(2);
   }

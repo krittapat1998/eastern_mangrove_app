@@ -750,9 +750,9 @@ class _QuarterlyReportScreenState extends State<QuarterlyReportScreen> with Sing
 
   String _formatCurrency(double value) {
     if (value >= 1000000) {
-      return (value / 1000000).toStringAsFixed(2) + 'M';
+      return '${(value / 1000000).toStringAsFixed(2)} ล้าน';
     } else if (value >= 1000) {
-      return (value / 1000).toStringAsFixed(1) + 'K';
+      return '${(value / 1000).toStringAsFixed(1)} พัน';
     }
     return value.toStringAsFixed(0);
   }
