@@ -1,4 +1,4 @@
-package com.example.eastern_mangrove_app
+package com.easternmangrove.app
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -81,11 +81,11 @@ class HomeScreen extends StatelessWidget {
                 // User Type Cards
                 _buildUserTypeCard(
                   context,
-                  icon: Icons.admin_panel_settings,
-                  title: 'ผู้ดูแลระบบ (Admin)',
-                  subtitle: 'จัดการข้อมูลพื้นที่และชุมชน',
-                  onTap: () => _navigateToLogin(context, 'admin'),
-                  color: const Color(0xFF2E7D32),
+                  icon: Icons.public,
+                  title: 'ผู้ใช้ทั่วไป',
+                  subtitle: 'ดูข้อมูลและสถิติป่าชายเลน',
+                  onTap: () => _navigateToPublic(context),
+                  color: const Color(0xFF4CAF50),
                 ),
                 
                 const SizedBox(height: 20),
@@ -103,11 +103,11 @@ class HomeScreen extends StatelessWidget {
                 
                 _buildUserTypeCard(
                   context,
-                  icon: Icons.public,
-                  title: 'ผู้ใช้ทั่วไป',
-                  subtitle: 'ดูข้อมูลและสถิติป่าชายเลน',
-                  onTap: () => _navigateToPublic(context),
-                  color: const Color(0xFF4CAF50),
+                  icon: Icons.admin_panel_settings,
+                  title: 'ผู้ดูแลระบบ (Admin)',
+                  subtitle: 'จัดการข้อมูลพื้นที่และชุมชน',
+                  onTap: () => _navigateToLogin(context, 'admin'),
+                  color: const Color(0xFF2E7D32),
                 ),
                 
                 const SizedBox(height: 40),
