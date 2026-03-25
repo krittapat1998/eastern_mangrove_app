@@ -377,8 +377,57 @@ class _LoginScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ลืมรหัสผ่าน'),
-        content: const Text('กรุณาติดต่อผู้ดูแลระบบสำหรับการรีเซ็ตรหัสผ่าน'),
+        title: const Row(
+          children: [
+            Icon(Icons.lock_reset, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('ลืมรหัสผ่าน'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'กรุณาติดต่อผู้ดูแลระบบเพื่อขอรีเซ็ตรหัสผ่าน',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: const Column(
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.phone, size: 18, color: Colors.blue),
+                      SizedBox(width: 8),
+                      SelectableText(
+                        '063-253-3546',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.email, size: 18, color: Colors.blue),
+                      SizedBox(width: 8),
+                      SelectableText(
+                        'krittapat.sea1998@gmail.com',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
