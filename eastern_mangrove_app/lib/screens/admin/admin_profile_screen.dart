@@ -360,7 +360,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                                   ),
                                   validator: (v) {
                                     if (v == null || v.isEmpty) return 'กรุณากรอกอีเมล';
-                                    if (!v.contains('@')) return 'รูปแบบอีเมลไม่ถูกต้อง';
+                                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(v)) return 'รูปแบบอีเมลไม่ถูกต้อง เช่น example@email.com';
                                     return null;
                                   },
                                 ),

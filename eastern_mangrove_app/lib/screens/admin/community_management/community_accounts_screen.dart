@@ -994,7 +994,7 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value?.isEmpty ?? true) return 'กรุณากรอกอีเมล';
-                    if (!value!.contains('@')) return 'รูปแบบอีเมลไม่ถูกต้อง';
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!)) return 'รูปแบบอีเมลไม่ถูกต้อง เช่น example@email.com';
                     return null;
                   },
                   enabled: !isChecking,
@@ -1367,7 +1367,7 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value?.isEmpty ?? true) return 'กรุณากรอกอีเมล';
-                    if (!value!.contains('@')) return 'รูปแบบอีเมลไม่ถูกต้อง';
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!)) return 'รูปแบบอีเมลไม่ถูกต้อง เช่น example@email.com';
                     return null;
                   },
                 ),

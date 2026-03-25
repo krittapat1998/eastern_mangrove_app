@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_client.dart';
 import '../../models/models.dart';
+import '../../data/thai_address_data.dart';
 
 class CommunityRegistrationScreen extends StatefulWidget {
   const CommunityRegistrationScreen({super.key});
@@ -18,9 +19,6 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
   // Form Controllers
   final _communityNameController = TextEditingController();
   final _villageNameController = TextEditingController();
-  final _subDistrictController = TextEditingController();
-  final _districtController = TextEditingController();
-  final _provinceController = TextEditingController();
   final _contactPersonController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
@@ -29,19 +27,15 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
   final _confirmPasswordController = TextEditingController();
   final _descriptionController = TextEditingController();
 
+  // Address dropdowns
+  String? _selectedProvince;
+  String? _selectedDistrict;
+  String? _selectedSubDistrict;
+  String _postalCode = '';
+
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-
-  final List<String> _provinces = [
-    'ชลบุรี',
-    'ระยอง',
-    'จันทบุรี',
-    'ตราด',
-    'ฉะเชิงเทรา',
-    'ปราจีนบุรี',
-    'สระแก้ว',
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -295,62 +289,9 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
           
           const SizedBox(height: 20),
           
-          // Location Information
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _subDistrictController,
-                  decoration: InputDecoration(
-                    labelText: 'ตำบล *',
-                    hintText: 'เช่น ธนาคารปู',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.orange, width: 2),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'กรุณาป้อนตำบล';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextFormField(
-                  controller: _districtController,
-                  decoration: InputDecoration(
-                    labelText: 'อำเภอ *',
-                    hintText: 'เช่น วัดบน',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.orange, width: 2),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'กรุณาป้อนอำเภอ';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 20),
-          
-          // Province
+          // Province dropdown
           DropdownButtonFormField<String>(
-            value: _provinceController.text.isNotEmpty ? _provinceController.text : null,
+            value: _selectedProvince,
             decoration: InputDecoration(
               labelText: 'จังหวัด *',
               prefixIcon: const Icon(Icons.location_on),
@@ -362,21 +303,110 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
                 borderSide: const BorderSide(color: Colors.orange, width: 2),
               ),
             ),
-            items: _provinces.map((province) => DropdownMenuItem(
-              value: province,
-              child: Text(province),
-            )).toList(),
+            items: ThaiAddressData.provinces
+                .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                .toList(),
             onChanged: (value) {
               setState(() {
-                _provinceController.text = value!;
+                _selectedProvince = value;
+                _selectedDistrict = null;
+                _selectedSubDistrict = null;
+                _postalCode = '';
               });
             },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'กรุณาเลือกจังหวัด';
-              }
-              return null;
-            },
+            validator: (value) =>
+                value == null ? 'กรุณาเลือกจังหวัด' : null,
+          ),
+
+          const SizedBox(height: 20),
+
+          // District dropdown
+          DropdownButtonFormField<String>(
+            value: _selectedDistrict,
+            decoration: InputDecoration(
+              labelText: 'อำเภอ *',
+              prefixIcon: const Icon(Icons.location_city),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.orange, width: 2),
+              ),
+            ),
+            items: _selectedProvince == null
+                ? []
+                : ThaiAddressData.getDistricts(_selectedProvince!)
+                    .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+                    .toList(),
+            onChanged: _selectedProvince == null
+                ? null
+                : (value) {
+                    setState(() {
+                      _selectedDistrict = value;
+                      _selectedSubDistrict = null;
+                      _postalCode = '';
+                    });
+                  },
+            validator: (value) =>
+                value == null ? 'กรุณาเลือกอำเภอ' : null,
+          ),
+
+          const SizedBox(height: 20),
+
+          // Sub-district dropdown
+          DropdownButtonFormField<String>(
+            value: _selectedSubDistrict,
+            decoration: InputDecoration(
+              labelText: 'ตำบล *',
+              prefixIcon: const Icon(Icons.place),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.orange, width: 2),
+              ),
+            ),
+            items: (_selectedProvince == null || _selectedDistrict == null)
+                ? []
+                : ThaiAddressData.getSubDistricts(
+                        _selectedProvince!, _selectedDistrict!)
+                    .map((s) =>
+                        DropdownMenuItem(value: s.name, child: Text(s.name)))
+                    .toList(),
+            onChanged: (_selectedProvince == null || _selectedDistrict == null)
+                ? null
+                : (value) {
+                    final subList = ThaiAddressData.getSubDistricts(
+                        _selectedProvince!, _selectedDistrict!);
+                    final selected =
+                        subList.firstWhere((s) => s.name == value);
+                    setState(() {
+                      _selectedSubDistrict = value;
+                      _postalCode = selected.postalCode;
+                    });
+                  },
+            validator: (value) =>
+                value == null ? 'กรุณาเลือกตำบล' : null,
+          ),
+
+          const SizedBox(height: 20),
+
+          // Postal code (auto-filled)
+          TextFormField(
+            readOnly: true,
+            decoration: InputDecoration(
+              labelText: 'รหัสไปรษณีย์',
+              hintText: _postalCode.isEmpty ? 'กรอกอัตโนมัติเมื่อเลือกตำบล' : _postalCode,
+              prefixIcon: const Icon(Icons.markunread_mailbox),
+              filled: true,
+              fillColor: Colors.grey.shade100,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            controller: TextEditingController(text: _postalCode),
           ),
           
           const SizedBox(height: 20),
@@ -501,8 +531,8 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
               if (value == null || value.isEmpty) {
                 return 'กรุณาป้อนอีเมล';
               }
-              if (!value.contains('@')) {
-                return 'รูปแบบอีเมลไม่ถูกต้อง';
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                return 'รูปแบบอีเมลไม่ถูกต้อง เช่น example@email.com';
               }
               return null;
             },
@@ -628,9 +658,9 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
       print('📋 Validating Step 1...');
       if (_communityNameController.text.isEmpty ||
           _villageNameController.text.isEmpty ||
-          _subDistrictController.text.isEmpty ||
-          _districtController.text.isEmpty ||
-          _provinceController.text.isEmpty) {
+          _selectedProvince == null ||
+          _selectedDistrict == null ||
+          _selectedSubDistrict == null) {
         print('❌ Step 1 validation failed');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -675,10 +705,10 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
       // Build location string from village, subdistrict, district, province
       final location = [
         _villageNameController.text.trim(),
-        'ตำบล${_subDistrictController.text.trim()}',
-        'อำเภอ${_districtController.text.trim()}',
-        'จังหวัด${_provinceController.text.trim()}',
-      ].where((s) => s.isNotEmpty).join(' ');
+        'ตำบล${_selectedSubDistrict ?? ''}',
+        'อำเภอ${_selectedDistrict ?? ''}',
+        'จังหวัด${_selectedProvince ?? ''}',
+      ].where((s) => s.isNotEmpty && s != 'ตำบล' && s != 'อำเภอ' && s != 'จังหวัด').join(' ');
 
       print('📍 Location: $location');
       print('🏘️ Community Name: ${_communityNameController.text.trim()}');
@@ -794,9 +824,6 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
     _pageController.dispose();
     _communityNameController.dispose();
     _villageNameController.dispose();
-    _subDistrictController.dispose();
-    _districtController.dispose();
-    _provinceController.dispose();
     _contactPersonController.dispose();
     _phoneController.dispose();
     _emailController.dispose();

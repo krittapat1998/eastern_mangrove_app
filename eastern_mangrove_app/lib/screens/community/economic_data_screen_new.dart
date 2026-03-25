@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/api_client.dart';
+import '../../data/thai_address_data.dart';
 
 class EconomicDataScreenNew extends StatefulWidget {
   const EconomicDataScreenNew({super.key});
@@ -18,10 +19,13 @@ class _EconomicDataScreenNewState extends State<EconomicDataScreenNew> {
 
   // Form Controllers
   final _villageNameController = TextEditingController();
-  final _subDistrictController = TextEditingController();
-  final _districtController = TextEditingController();
-  final _provinceController = TextEditingController();
   final _areaSizeController = TextEditingController();
+
+  // Location dropdown state
+  String? _selectedProvince;
+  String? _selectedDistrict;
+  String? _selectedSubDistrict;
+  String _postalCode = '';
   final _totalPopulationController = TextEditingController();
   final _resourceDependentController = TextEditingController();
   final _householdsController = TextEditingController();
@@ -135,9 +139,6 @@ class _EconomicDataScreenNewState extends State<EconomicDataScreenNew> {
           
           // Fill form with existing data (don't show 0, leave empty instead)
           _villageNameController.text = community['villageName']?.toString() ?? '';
-          _subDistrictController.text = community['subDistrict']?.toString() ?? '';
-          _districtController.text = community['district']?.toString() ?? '';
-          _provinceController.text = community['province']?.toString() ?? '';
           
           // If village name is empty, try to extract from community name
           if (_villageNameController.text.isEmpty && community['name'] != null) {
@@ -147,17 +148,33 @@ class _EconomicDataScreenNewState extends State<EconomicDataScreenNew> {
             }
           }
           
-          // If new fields are empty, try to parse from old 'location' field
-          if (_subDistrictController.text.isEmpty && 
-              _districtController.text.isEmpty && 
-              _provinceController.text.isEmpty &&
+          // Load province/district/subDistrict for cascading dropdowns
+          String province = community['province']?.toString() ?? '';
+          String district = community['district']?.toString() ?? '';
+          String subDistrict = community['subDistrict']?.toString() ?? '';
+          
+          // Fallback: parse from old 'location' field
+          if (province.isEmpty && district.isEmpty && subDistrict.isEmpty &&
               community['location'] != null) {
             final locationParts = _parseLocation(community['location'].toString());
-            if (locationParts.isNotEmpty) {
-              _subDistrictController.text = locationParts['subDistrict'] ?? '';
-              _districtController.text = locationParts['district'] ?? '';
-              _provinceController.text = locationParts['province'] ?? '';
-            }
+            province = locationParts['province'] ?? '';
+            district = locationParts['district'] ?? '';
+            subDistrict = locationParts['subDistrict'] ?? '';
+          }
+          
+          // Validate against ThaiAddressData
+          _selectedProvince = ThaiAddressData.provinces.contains(province) ? province : null;
+          _selectedDistrict = _selectedProvince != null &&
+              ThaiAddressData.getDistricts(_selectedProvince!).contains(district)
+              ? district : null;
+          if (_selectedProvince != null && _selectedDistrict != null) {
+            final subList = ThaiAddressData.getSubDistricts(_selectedProvince!, _selectedDistrict!);
+            final match = subList.where((s) => s.name == subDistrict).toList();
+            _selectedSubDistrict = match.isNotEmpty ? subDistrict : null;
+            _postalCode = match.isNotEmpty ? match.first.postalCode : '';
+          } else {
+            _selectedSubDistrict = null;
+            _postalCode = '';
           }
           
           // Only show numbers if they're greater than 0
@@ -188,7 +205,7 @@ class _EconomicDataScreenNewState extends State<EconomicDataScreenNew> {
           // Show info if data is still empty after parsing
           if (_villageNameController.text.isEmpty && 
               _totalPopulationController.text.isEmpty &&
-              _subDistrictController.text.isEmpty) {
+              _selectedSubDistrict == null) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -227,9 +244,9 @@ class _EconomicDataScreenNewState extends State<EconomicDataScreenNew> {
     try {
       final profileData = {
         'villageName': _villageNameController.text.trim(),
-        'subDistrict': _subDistrictController.text.trim(),
-        'district': _districtController.text.trim(),
-        'province': _provinceController.text.trim(),
+        'subDistrict': _selectedSubDistrict ?? '',
+        'district': _selectedDistrict ?? '',
+        'province': _selectedProvince ?? '',
         'areaSize': double.tryParse(_areaSizeController.text.trim()) ?? 0.0,
         'totalPopulation': int.tryParse(_totalPopulationController.text.trim()) ?? 0,
         'resourceDependentPopulation': int.tryParse(_resourceDependentController.text.trim()) ?? 0,
@@ -346,45 +363,103 @@ class _EconomicDataScreenNewState extends State<EconomicDataScreenNew> {
               Icons.location_on,
               Colors.blue,
               [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        'ชื่อหมู่บ้าน *',
-                        _villageNameController,
-                        'เช่น บ้านบางปู',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildTextField(
-                        'ตำบล *',
-                        _subDistrictController,
-                        'เช่น แหลมฉบัง',
-                      ),
-                    ),
-                  ],
+                _buildTextField(
+                  'ชื่อหมู่บ้าน *',
+                  _villageNameController,
+                  'เช่น บ้านบางปู',
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        'อำเภอ *',
-                        _districtController,
-                        'เช่น ศรีราชา',
-                      ),
+                DropdownButtonFormField<String>(
+                  value: _selectedProvince,
+                  decoration: InputDecoration(
+                    labelText: 'จังหวัด *',
+                    prefixIcon: const Icon(Icons.location_city),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildDropdownField(
-                        'จังหวัด *',
-                        _provinceController.text,
-                        ['ชลบุรี', 'ระยอง', 'จันทบุรี', 'ตราด', 'ฉะเชิงเทรา', 'ปราจีนบุรี', 'สระแก้ว'],
-                        (value) => setState(() => _provinceController.text = value!),
-                      ),
+                  ),
+                  items: ThaiAddressData.provinces
+                      .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedProvince = value;
+                      _selectedDistrict = null;
+                      _selectedSubDistrict = null;
+                      _postalCode = '';
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedDistrict,
+                  decoration: InputDecoration(
+                    labelText: 'อำเภอ *',
+                    prefixIcon: const Icon(Icons.location_on),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
                     ),
-                  ],
+                  ),
+                  items: _selectedProvince == null
+                      ? []
+                      : ThaiAddressData.getDistricts(_selectedProvince!)
+                          .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+                          .toList(),
+                  onChanged: _selectedProvince == null
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _selectedDistrict = value;
+                            _selectedSubDistrict = null;
+                            _postalCode = '';
+                          });
+                        },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedSubDistrict,
+                  decoration: InputDecoration(
+                    labelText: 'ตำบล *',
+                    prefixIcon: const Icon(Icons.place),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
+                    ),
+                  ),
+                  items: (_selectedProvince == null || _selectedDistrict == null)
+                      ? []
+                      : ThaiAddressData.getSubDistricts(_selectedProvince!, _selectedDistrict!)
+                          .map((s) => DropdownMenuItem(value: s.name, child: Text(s.name)))
+                          .toList(),
+                  onChanged: (_selectedProvince == null || _selectedDistrict == null)
+                      ? null
+                      : (value) {
+                          final subList = ThaiAddressData.getSubDistricts(
+                              _selectedProvince!, _selectedDistrict!);
+                          final selected = subList.firstWhere((s) => s.name == value);
+                          setState(() {
+                            _selectedSubDistrict = value;
+                            _postalCode = selected.postalCode;
+                          });
+                        },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  readOnly: true,
+                  controller: TextEditingController(text: _postalCode),
+                  decoration: InputDecoration(
+                    labelText: 'รหัสไปรษณีย์',
+                    hintText: _postalCode.isEmpty ? 'กรอกอัตโนมัติเมื่อเลือกตำบล' : null,
+                    prefixIcon: const Icon(Icons.markunread_mailbox),
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
@@ -644,9 +719,6 @@ class _EconomicDataScreenNewState extends State<EconomicDataScreenNew> {
   @override
   void dispose() {
     _villageNameController.dispose();
-    _subDistrictController.dispose();
-    _districtController.dispose();
-    _provinceController.dispose();
     _areaSizeController.dispose();
     _totalPopulationController.dispose();
     _resourceDependentController.dispose();
