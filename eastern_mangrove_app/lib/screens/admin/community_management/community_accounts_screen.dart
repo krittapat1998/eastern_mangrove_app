@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../services/api_client.dart';
+import '../../../../data/thai_address_data.dart';
 
 class CommunityAccountsScreen extends StatefulWidget {
   const CommunityAccountsScreen({super.key});
@@ -246,6 +247,38 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDialogSectionTitle(String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF2E7D32), size: 20),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2E7D32),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _dialogInputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
       ),
     );
   }
@@ -921,7 +954,7 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
   void _showAddCommunityDialog() {
     final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController();
-    final locationController = TextEditingController();
+    final villageNameController = TextEditingController();
     final contactPersonController = TextEditingController();
     final phoneController = TextEditingController();
     final emailController = TextEditingController();
@@ -929,13 +962,16 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
     final descriptionController = TextEditingController();
     final establishedYearController = TextEditingController();
     final memberCountController = TextEditingController();
+    String? selectedProvince;
+    String? selectedDistrict;
+    String? selectedSubDistrict;
+    String postalCode = '';
+    bool isChecking = false;
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
-          bool isChecking = false;
-          
           return AlertDialog(
             title: const Text('เพิ่มบัญชีชุมชน'),
             content: SingleChildScrollView(
@@ -944,146 +980,220 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // --- ข้อมูลพื้นฐาน ---
+                    _buildDialogSectionTitle('ข้อมูลพื้นฐาน', Icons.info),
+                    const SizedBox(height: 8),
                     TextFormField(
                       controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'ชื่อชุมชน *',
-                        border: OutlineInputBorder(),
-                      ),
+                      decoration: _dialogInputDecoration('ชื่อชุมชน *', Icons.home),
                       validator: (value) => value?.isEmpty ?? true ? 'กรุณากรอกชื่อชุมชน' : null,
                       enabled: !isChecking,
                     ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: locationController,
-                  decoration: const InputDecoration(
-                    labelText: 'ที่อยู่ *',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value?.isEmpty ?? true ? 'กรุณากรอกที่อยู่' : null,
-                  enabled: !isChecking,
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: descriptionController,
+                      decoration: _dialogInputDecoration('คำอธิบายชุมชน', Icons.description),
+                      maxLines: 2,
+                      enabled: !isChecking,
+                    ),
+                    const SizedBox(height: 20),
+                    // --- ที่ตั้ง ---
+                    _buildDialogSectionTitle('ข้อมูลที่ตั้ง', Icons.place),
+                    const SizedBox(height: 8),
+                    InputDecorator(
+                      decoration: _dialogInputDecoration('จังหวัด', Icons.location_city),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedProvince,
+                          isDense: true,
+                          isExpanded: true,
+                          hint: const Text('เลือกจังหวัด'),
+                          items: ThaiAddressData.provinces
+                              .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                              .toList(),
+                          onChanged: isChecking ? null : (value) {
+                            setState(() {
+                              selectedProvince = value;
+                              selectedDistrict = null;
+                              selectedSubDistrict = null;
+                              postalCode = '';
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    InputDecorator(
+                      decoration: _dialogInputDecoration('อำเภอ', Icons.location_on),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedDistrict,
+                          isDense: true,
+                          isExpanded: true,
+                          hint: const Text('เลือกอำเภอ'),
+                          items: selectedProvince == null
+                              ? []
+                              : ThaiAddressData.getDistricts(selectedProvince!)
+                                  .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+                                  .toList(),
+                          onChanged: (isChecking || selectedProvince == null) ? null : (value) {
+                            setState(() {
+                              selectedDistrict = value;
+                              selectedSubDistrict = null;
+                              postalCode = '';
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    InputDecorator(
+                      decoration: _dialogInputDecoration('ตำบล', Icons.my_location),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedSubDistrict,
+                          isDense: true,
+                          isExpanded: true,
+                          hint: const Text('เลือกตำบล'),
+                          items: (selectedProvince == null || selectedDistrict == null)
+                              ? []
+                              : ThaiAddressData.getSubDistricts(selectedProvince!, selectedDistrict!)
+                                  .map((s) => DropdownMenuItem(value: s.name, child: Text(s.name)))
+                                  .toList(),
+                          onChanged: (isChecking || selectedProvince == null || selectedDistrict == null)
+                              ? null
+                              : (value) {
+                                  final subs = ThaiAddressData.getSubDistricts(selectedProvince!, selectedDistrict!);
+                                  final sel = subs.firstWhere((s) => s.name == value);
+                                  setState(() {
+                                    selectedSubDistrict = value;
+                                    postalCode = sel.postalCode;
+                                  });
+                                },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      readOnly: true,
+                      controller: TextEditingController(text: postalCode),
+                      decoration: InputDecoration(
+                        labelText: 'รหัสไปรษณีย์',
+                        hintText: postalCode.isEmpty ? 'กรอกอัตโนมัติเมื่อเลือกตำบล' : null,
+                        prefixIcon: const Icon(Icons.markunread_mailbox),
+                        filled: true,
+                        fillColor: Colors.grey.shade100,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: villageNameController,
+                      decoration: _dialogInputDecoration('ชื่อหมู่บ้าน', Icons.home_work),
+                      enabled: !isChecking,
+                    ),
+                    const SizedBox(height: 20),
+                    // --- ข้อมูลติดต่อ ---
+                    _buildDialogSectionTitle('ข้อมูลติดต่อ', Icons.contact_page),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: contactPersonController,
+                      decoration: _dialogInputDecoration('ผู้ติดต่อ *', Icons.person),
+                      validator: (value) => value?.isEmpty ?? true ? 'กรุณากรอกผู้ติดต่อ' : null,
+                      enabled: !isChecking,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: phoneController,
+                      decoration: _dialogInputDecoration('เบอร์โทรศัพท์ *', Icons.phone),
+                      keyboardType: TextInputType.phone,
+                      validator: (value) => value?.isEmpty ?? true ? 'กรุณากรอกเบอร์โทรศัพท์' : null,
+                      enabled: !isChecking,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: emailController,
+                      decoration: _dialogInputDecoration('อีเมล *', Icons.email),
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value?.isEmpty ?? true) return 'กรุณากรอกอีเมล';
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!)) return 'รูปแบบอีเมลไม่ถูกต้อง เช่น example@email.com';
+                        return null;
+                      },
+                      enabled: !isChecking,
+                    ),
+                    const SizedBox(height: 20),
+                    // --- รหัสผ่าน ---
+                    _buildDialogSectionTitle('บัญชีผู้ใช้', Icons.lock),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: passwordController,
+                      obscureText: true,
+                      decoration: _dialogInputDecoration('รหัสผ่าน *', Icons.lock_outline),
+                      validator: (value) {
+                        if (value?.isEmpty ?? true) return 'กรุณากรอกรหัสผ่าน';
+                        if (value!.length < 8) return 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร';
+                        return null;
+                      },
+                      enabled: !isChecking,
+                    ),
+                    const SizedBox(height: 20),
+                    // --- ข้อมูลชุมชน ---
+                    _buildDialogSectionTitle('ข้อมูลชุมชน', Icons.people),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: establishedYearController,
+                      decoration: _dialogInputDecoration('ปีที่ก่อตั้ง (พ.ศ.)', Icons.calendar_today),
+                      keyboardType: TextInputType.number,
+                      enabled: !isChecking,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: memberCountController,
+                      decoration: _dialogInputDecoration('จำนวนสมาชิก', Icons.groups),
+                      keyboardType: TextInputType.number,
+                      enabled: !isChecking,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: contactPersonController,
-                  decoration: const InputDecoration(
-                    labelText: 'ผู้ติดต่อ *',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value?.isEmpty ?? true ? 'กรุณากรอกผู้ติดต่อ' : null,
-                  enabled: !isChecking,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: phoneController,
-                  decoration: const InputDecoration(
-                    labelText: 'เบอร์โทรศัพท์ *',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.phone,
-                  validator: (value) => value?.isEmpty ?? true ? 'กรุณากรอกเบอร์โทรศัพท์' : null,
-                  enabled: !isChecking,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'อีเมล *',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) return 'กรุณากรอกอีเมล';
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!)) return 'รูปแบบอีเมลไม่ถูกต้อง เช่น example@email.com';
-                    return null;
-                  },
-                  enabled: !isChecking,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'รหัสผ่าน *',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) return 'กรุณากรอกรหัสผ่าน';
-                    if (value!.length < 8) return 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร';
-                    return null;
-                  },
-                  enabled: !isChecking,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'คำอธิบาย',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
-                  enabled: !isChecking,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: establishedYearController,
-                  decoration: const InputDecoration(
-                    labelText: 'ปีที่ก่อตั้ง',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  enabled: !isChecking,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: memberCountController,
-                  decoration: const InputDecoration(
-                    labelText: 'จำนวนสมาชิก',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  enabled: !isChecking,
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: isChecking ? null : () => Navigator.pop(context),
-            child: const Text('ยกเลิก'),
-          ),
-          ElevatedButton(
-            onPressed: isChecking ? null : () async {
-              if (formKey.currentState!.validate()) {
-                // Show loading
-                setState(() => isChecking = true);
-                
-                try {
-                  // Check for duplicate first
-                  print('🔍 Checking duplicate...');
-                  final checkResponse = await _apiClient.checkDuplicateCommunity(
-                    communityName: nameController.text,
-                    email: emailController.text,
-                  );
-                  
-                  setState(() => isChecking = false);
-                  
-                  if (!checkResponse.success) {
-                    // API error - show alert
-                    if (mounted) {
-                      final errMsg = checkResponse.error ?? '';
-                      final isTokenError = errMsg.contains('Token') || errMsg.contains('token') || errMsg.contains('Unauthorized') || errMsg.contains('expired') || errMsg.contains('login');
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: Row(
-                            children: [
-                              Icon(isTokenError ? Icons.lock_outline : Icons.error_outline, color: isTokenError ? Colors.orange : Colors.red),
-                              const SizedBox(width: 8),
-                              Text(isTokenError ? 'เซสชันหมดอายุ' : 'เกิดข้อผิดพลาด'),
-                            ],
-                          ),
+            actions: [
+              TextButton(
+                onPressed: isChecking ? null : () => Navigator.pop(context),
+                child: const Text('ยกเลิก'),
+              ),
+              ElevatedButton(
+                onPressed: isChecking ? null : () async {
+                  if (formKey.currentState!.validate()) {
+                    // Show loading
+                    setState(() => isChecking = true);
+                    
+                    try {
+                      // Check for duplicate first
+                      print('🔍 Checking duplicate...');
+                      final checkResponse = await _apiClient.checkDuplicateCommunity(
+                        communityName: nameController.text,
+                        email: emailController.text,
+                      );
+                      
+                      setState(() => isChecking = false);
+                      
+                      if (!checkResponse.success) {
+                        // API error - show alert
+                        if (mounted) {
+                          final errMsg = checkResponse.error ?? '';
+                          final isTokenError = errMsg.contains('Token') || errMsg.contains('token') || errMsg.contains('Unauthorized') || errMsg.contains('expired') || errMsg.contains('login');
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: Row(
+                                children: [
+                                  Icon(isTokenError ? Icons.lock_outline : Icons.error_outline, color: isTokenError ? Colors.orange : Colors.red),
+                                  const SizedBox(width: 8),
+                                  Text(isTokenError ? 'เซสชันหมดอายุ' : 'เกิดข้อผิดพลาด'),
+                                ],
+                              ),
                           content: Text(isTokenError
                               ? 'กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่\n(เซสชันหมดอายุ)'
                               : (checkResponse.error ?? 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล')),
@@ -1133,9 +1243,21 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
                   // No duplicate, proceed to create
                   Navigator.pop(context);
                   
+                  final locationStr = [
+                    villageNameController.text.isNotEmpty ? 'หมู่บ้าน${villageNameController.text.trim()}' : '',
+                    selectedSubDistrict != null ? 'ตำบล$selectedSubDistrict' : '',
+                    selectedDistrict != null ? 'อำเภอ$selectedDistrict' : '',
+                    selectedProvince != null ? 'จังหวัด$selectedProvince' : '',
+                    postalCode,
+                  ].where((s) => s.isNotEmpty).join(' ');
+                  
                   await _addCommunity(
                     nameController.text,
-                    locationController.text,
+                    locationStr,
+                    villageNameController.text.trim().isEmpty ? null : villageNameController.text.trim(),
+                    selectedSubDistrict,
+                    selectedDistrict,
+                    selectedProvince,
                     contactPersonController.text,
                     phoneController.text,
                     emailController.text,
@@ -1189,6 +1311,10 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
   Future<void> _addCommunity(
     String name,
     String location,
+    String? villageName,
+    String? subDistrict,
+    String? district,
+    String? province,
     String contactPerson,
     String phone,
     String email,
@@ -1208,6 +1334,10 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
       final response = await _apiClient.createCommunity(
         communityName: name,
         location: location,
+        villageName: villageName,
+        subDistrict: subDistrict,
+        district: district,
+        province: province,
         contactPerson: contactPerson,
         phoneNumber: phone,
         email: email,
@@ -1299,7 +1429,7 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
   void _showEditCommunityDialog(dynamic community) {
     final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController(text: community['community_name']);
-    final locationController = TextEditingController(text: community['location']);
+    final villageNameController = TextEditingController(text: community['village_name'] ?? community['villageName'] ?? '');
     final contactPersonController = TextEditingController(text: community['contact_person']);
     final phoneController = TextEditingController(text: community['phone_number']);
     final emailController = TextEditingController(text: community['email']);
@@ -1311,123 +1441,263 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
       text: community['member_count']?.toString() ?? '',
     );
 
+    // Debug: print what community data the dialog received
+    debugPrint('🔍 Edit community keys: ${community.keys.toList()}');
+    debugPrint('   province     = ${community['province']}');
+    debugPrint('   district     = ${community['district']}');
+    debugPrint('   sub_district = ${community['sub_district']}');
+    debugPrint('   village_name = ${community['village_name']}');
+    debugPrint('   location     = ${community['location']}');
+
+    // Helper: extract value after a Thai prefix in the location string
+    final locationText = (community['location'] ?? '').toString();
+    String extractFromLocation(String prefix) {
+      if (!locationText.contains(prefix)) return '';
+      final start = locationText.indexOf(prefix) + prefix.length;
+      return locationText.substring(start).trim().split(RegExp(r'\s+')).first;
+    }
+
+    // Initialize location dropdowns — use DB column first, fall back to parsing location text
+    String pick(dynamic colValue, String locationPrefix) {
+      final v = (colValue ?? '').toString().trim();
+      return v.isNotEmpty ? v : extractFromLocation(locationPrefix);
+    }
+
+    final initProvince    = pick(community['province'], 'จังหวัด');
+    final initDistrict    = pick(community['district'], 'อำเภอ');
+    final initSubDistrict = pick(
+      community['sub_district'] ?? community['subDistrict'],
+      'ตำบล',
+    );
+    final initVillageName = pick(
+      community['village_name'] ?? community['villageName'],
+      'หมู่บ้าน',
+    );
+
+    debugPrint('   → initProvince=$initProvince  initDistrict=$initDistrict  initSubDistrict=$initSubDistrict');
+
+    // Overwrite villageNameController if parsed a value from location
+    if (villageNameController.text.isEmpty && initVillageName.isNotEmpty) {
+      villageNameController.text = initVillageName;
+    }
+
+    String? selectedProvince = ThaiAddressData.provinces.contains(initProvince) ? initProvince : null;
+    String? selectedDistrict = (selectedProvince != null &&
+        ThaiAddressData.getDistricts(selectedProvince).contains(initDistrict))
+        ? initDistrict : null;
+    String? selectedSubDistrict;
+    String postalCode = '';
+    if (selectedProvince != null && selectedDistrict != null) {
+      final subList = ThaiAddressData.getSubDistricts(selectedProvince, selectedDistrict);
+      final match = subList.where((s) => s.name == initSubDistrict).toList();
+      selectedSubDistrict = match.isNotEmpty ? initSubDistrict : null;
+      postalCode = match.isNotEmpty ? match.first.postalCode : '';
+    }
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('แก้ไขข้อมูลชุมชน'),
-        content: SingleChildScrollView(
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'ชื่อชุมชน *',
-                    border: OutlineInputBorder(),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('แก้ไขข้อมูลชุมชน'),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // --- ข้อมูลพื้นฐาน ---
+                  _buildDialogSectionTitle('ข้อมูลพื้นฐาน', Icons.info),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: nameController,
+                    decoration: _dialogInputDecoration('ชื่อชุมชน *', Icons.home),
+                    validator: (value) => value?.isEmpty ?? true ? 'กรุณากรอกชื่อชุมชน' : null,
                   ),
-                  validator: (value) => value?.isEmpty ?? true ? 'กรุณากรอกชื่อชุมชน' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: locationController,
-                  decoration: const InputDecoration(
-                    labelText: 'ที่อยู่ *',
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: descriptionController,
+                    decoration: _dialogInputDecoration('คำอธิบายชุมชน', Icons.description),
+                    maxLines: 2,
                   ),
-                  validator: (value) => value?.isEmpty ?? true ? 'กรุณากรอกที่อยู่' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: contactPersonController,
-                  decoration: const InputDecoration(
-                    labelText: 'ผู้ติดต่อ *',
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: 20),
+                  // --- ที่ตั้ง ---
+                  _buildDialogSectionTitle('ข้อมูลที่ตั้ง', Icons.place),
+                  const SizedBox(height: 8),
+                  InputDecorator(
+                    decoration: _dialogInputDecoration('จังหวัด', Icons.location_city),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: selectedProvince,
+                        isDense: true,
+                        isExpanded: true,
+                        hint: const Text('เลือกจังหวัด'),
+                        items: ThaiAddressData.provinces
+                            .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedProvince = value;
+                            selectedDistrict = null;
+                            selectedSubDistrict = null;
+                            postalCode = '';
+                          });
+                        },
+                      ),
+                    ),
                   ),
-                  validator: (value) => value?.isEmpty ?? true ? 'กรุณากรอกผู้ติดต่อ' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: phoneController,
-                  decoration: const InputDecoration(
-                    labelText: 'เบอร์โทรศัพท์ *',
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: 12),
+                  InputDecorator(
+                    decoration: _dialogInputDecoration('อำเภอ', Icons.location_on),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: selectedDistrict,
+                        isDense: true,
+                        isExpanded: true,
+                        hint: const Text('เลือกอำเภอ'),
+                        items: selectedProvince == null
+                            ? []
+                            : ThaiAddressData.getDistricts(selectedProvince!)
+                                .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+                                .toList(),
+                        onChanged: selectedProvince == null ? null : (value) {
+                          setState(() {
+                            selectedDistrict = value;
+                            selectedSubDistrict = null;
+                            postalCode = '';
+                          });
+                        },
+                      ),
+                    ),
                   ),
-                  keyboardType: TextInputType.phone,
-                  validator: (value) => value?.isEmpty ?? true ? 'กรุณากรอกเบอร์โทรศัพท์' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'อีเมล *',
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: 12),
+                  InputDecorator(
+                    decoration: _dialogInputDecoration('ตำบล', Icons.my_location),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: selectedSubDistrict,
+                        isDense: true,
+                        isExpanded: true,
+                        hint: const Text('เลือกตำบล'),
+                        items: (selectedProvince == null || selectedDistrict == null)
+                            ? []
+                            : ThaiAddressData.getSubDistricts(selectedProvince!, selectedDistrict!)
+                                .map((s) => DropdownMenuItem(value: s.name, child: Text(s.name)))
+                                .toList(),
+                        onChanged: (selectedProvince == null || selectedDistrict == null)
+                            ? null
+                            : (value) {
+                                final subs = ThaiAddressData.getSubDistricts(selectedProvince!, selectedDistrict!);
+                                final sel = subs.firstWhere((s) => s.name == value);
+                                setState(() {
+                                  selectedSubDistrict = value;
+                                  postalCode = sel.postalCode;
+                                });
+                              },
+                      ),
+                    ),
                   ),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) return 'กรุณากรอกอีเมล';
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!)) return 'รูปแบบอีเมลไม่ถูกต้อง เช่น example@email.com';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'คำอธิบาย',
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    readOnly: true,
+                    controller: TextEditingController(text: postalCode),
+                    decoration: InputDecoration(
+                      labelText: 'รหัสไปรษณีย์',
+                      hintText: postalCode.isEmpty ? 'กรอกอัตโนมัติเมื่อเลือกตำบล' : null,
+                      prefixIcon: const Icon(Icons.markunread_mailbox),
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: establishedYearController,
-                  decoration: const InputDecoration(
-                    labelText: 'ปีที่ก่อตั้ง',
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: villageNameController,
+                    decoration: _dialogInputDecoration('ชื่อหมู่บ้าน', Icons.home_work),
                   ),
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: memberCountController,
-                  decoration: const InputDecoration(
-                    labelText: 'จำนวนสมาชิก',
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: 20),
+                  // --- ข้อมูลติดต่อ ---
+                  _buildDialogSectionTitle('ข้อมูลติดต่อ', Icons.contact_page),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: contactPersonController,
+                    decoration: _dialogInputDecoration('ผู้ติดต่อ *', Icons.person),
+                    validator: (value) => value?.isEmpty ?? true ? 'กรุณากรอกผู้ติดต่อ' : null,
                   ),
-                  keyboardType: TextInputType.number,
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: phoneController,
+                    decoration: _dialogInputDecoration('เบอร์โทรศัพท์ *', Icons.phone),
+                    keyboardType: TextInputType.phone,
+                    validator: (value) => value?.isEmpty ?? true ? 'กรุณากรอกเบอร์โทรศัพท์' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: emailController,
+                    decoration: _dialogInputDecoration('อีเมล *', Icons.email),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      if (value?.isEmpty ?? true) return 'กรุณากรอกอีเมล';
+                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!)) return 'รูปแบบอีเมลไม่ถูกต้อง เช่น example@email.com';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  // --- ข้อมูลชุมชน ---
+                  _buildDialogSectionTitle('ข้อมูลชุมชน', Icons.people),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: establishedYearController,
+                    decoration: _dialogInputDecoration('ปีที่ก่อตั้ง (พ.ศ.)', Icons.calendar_today),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: memberCountController,
+                    decoration: _dialogInputDecoration('จำนวนสมาชิก', Icons.groups),
+                    keyboardType: TextInputType.number,
+                  ),
+                ],
+              ),
             ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('ยกเลิก'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  Navigator.pop(context);
+                  final communityId = community['id'];
+                  final locationStr = [
+                    villageNameController.text.isNotEmpty ? '\u0e2b\u0e21\u0e39\u0e48\u0e1a\u0e49\u0e32\u0e19${villageNameController.text.trim()}' : '',
+                    selectedSubDistrict != null ? '\u0e15\u0e33\u0e1a\u0e25$selectedSubDistrict' : '',
+                    selectedDistrict != null ? '\u0e2d\u0e33\u0e40\u0e20\u0e2d$selectedDistrict' : '',
+                    selectedProvince != null ? '\u0e08\u0e31\u0e07\u0e2b\u0e27\u0e31\u0e14$selectedProvince' : '',
+                    postalCode,
+                  ].where((s) => s.isNotEmpty).join(' ');
+                  await _updateCommunity(
+                    communityId,
+                    nameController.text,
+                    locationStr.isNotEmpty ? locationStr : null,
+                    villageNameController.text.trim().isEmpty ? null : villageNameController.text.trim(),
+                    selectedSubDistrict,
+                    selectedDistrict,
+                    selectedProvince,
+                    contactPersonController.text,
+                    phoneController.text,
+                    emailController.text,
+                    descriptionController.text.isEmpty ? null : descriptionController.text,
+                    establishedYearController.text.isEmpty ? null : int.tryParse(establishedYearController.text),
+                    memberCountController.text.isEmpty ? null : int.tryParse(memberCountController.text),
+                  );
+                }
+              },
+              child: const Text('บันทึก'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('ยกเลิก'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                Navigator.pop(context);
-                final communityId = community['id'];
-                await _updateCommunity(
-                  communityId,
-                  nameController.text,
-                  locationController.text,
-                  contactPersonController.text,
-                  phoneController.text,
-                  emailController.text,
-                  descriptionController.text.isEmpty ? null : descriptionController.text,
-                  establishedYearController.text.isEmpty ? null : int.tryParse(establishedYearController.text),
-                  memberCountController.text.isEmpty ? null : int.tryParse(memberCountController.text),
-                );
-              }
-            },
-            child: const Text('บันทึก'),
-          ),
-        ],
       ),
     );
   }
@@ -1435,7 +1705,11 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
   Future<void> _updateCommunity(
     int? communityId,
     String name,
-    String location,
+    String? location,
+    String? villageName,
+    String? subDistrict,
+    String? district,
+    String? province,
     String contactPerson,
     String phone,
     String email,
@@ -1460,12 +1734,16 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
     try {
       print('🔧 กำลังแก้ไขชุมชน ID: $communityId');
       print('   - ชื่อ: $name');
-      print('   - ที่อยู่: $location');
+      print('   - จังหวัด: $province, อำเภอ: $district, ตำบล: $subDistrict');
       
       final response = await _apiClient.updateCommunity(
         communityId, // Now guaranteed to be non-null
         communityName: name,
         location: location,
+        villageName: villageName,
+        subDistrict: subDistrict,
+        district: district,
+        province: province,
         contactPerson: contactPerson,
         phoneNumber: phone,
         email: email,

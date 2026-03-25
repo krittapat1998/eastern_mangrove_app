@@ -331,6 +331,10 @@ router.post('/communities', async (req, res) => {
   const {
     communityName,
     location,
+    villageName,
+    subDistrict,
+    district,
+    province,
     contactPerson,
     phoneNumber,
     email,
@@ -341,7 +345,7 @@ router.post('/communities', async (req, res) => {
   } = req.body;
 
   // Validate required fields
-  if (!communityName || !location || !contactPerson || !phoneNumber || !email || !password) {
+  if (!communityName || !contactPerson || !phoneNumber || !email || !password) {
     return res.status(400).json({
       success: false,
       error: 'Validation error',
@@ -406,17 +410,30 @@ router.post('/communities', async (req, res) => {
 
     const userId = userResult.rows[0].id;
 
+    // Build location string from parts if not provided directly
+    const locationStr = location || [
+      villageName ? `หมู่บ้าน${villageName}` : '',
+      subDistrict ? `ตำบล${subDistrict}` : '',
+      district ? `อำเภอ${district}` : '',
+      province ? `จังหวัด${province}` : ''
+    ].filter(Boolean).join(' ') || '';
+
     // Create community (approved by default when created by admin)
     const communityResult = await db.query(
       `INSERT INTO communities (
-        community_name, location, contact_person, phone_number, email, description, 
+        community_name, location, village_name, sub_district, district, province,
+        contact_person, phone_number, email, description, 
         established_year, member_count, registration_status, approved_by, approved_at, created_at, updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'approved', $9, NOW(), NOW(), NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'approved', $13, NOW(), NOW(), NOW())
       RETURNING id`,
       [
         communityName,
-        location,
+        locationStr,
+        villageName || null,
+        subDistrict || null,
+        district || null,
+        province || null,
         contactPerson,
         phoneNumber,
         email,
@@ -466,6 +483,10 @@ router.put('/communities/:id', async (req, res) => {
   const {
     communityName,
     location,
+    villageName,
+    subDistrict,
+    district,
+    province,
     contactPerson,
     phoneNumber,
     email,
@@ -538,9 +559,31 @@ router.put('/communities/:id', async (req, res) => {
       updates.push(`community_name = $${paramIndex++}`);
       values.push(communityName);
     }
-    if (location) {
+    if (location || (province && district && subDistrict)) {
+      const locationStr = location || [
+        villageName ? `หมู่บ้าน${villageName}` : '',
+        subDistrict ? `ตำบล${subDistrict}` : '',
+        district ? `อำเภอ${district}` : '',
+        province ? `จังหวัด${province}` : ''
+      ].filter(Boolean).join(' ');
       updates.push(`location = $${paramIndex++}`);
-      values.push(location);
+      values.push(locationStr);
+    }
+    if (villageName !== undefined) {
+      updates.push(`village_name = $${paramIndex++}`);
+      values.push(villageName || null);
+    }
+    if (subDistrict !== undefined) {
+      updates.push(`sub_district = $${paramIndex++}`);
+      values.push(subDistrict || null);
+    }
+    if (district !== undefined) {
+      updates.push(`district = $${paramIndex++}`);
+      values.push(district || null);
+    }
+    if (province !== undefined) {
+      updates.push(`province = $${paramIndex++}`);
+      values.push(province || null);
     }
     if (contactPerson) {
       updates.push(`contact_person = $${paramIndex++}`);

@@ -667,6 +667,10 @@ class ApiClient {
   Future<ApiResponse<Map<String, dynamic>>> createCommunity({
     required String communityName,
     required String location,
+    String? villageName,
+    String? subDistrict,
+    String? district,
+    String? province,
     required String contactPerson,
     required String phoneNumber,
     required String email,
@@ -685,6 +689,10 @@ class ApiClient {
       final requestBody = {
         'communityName': communityName,
         'location': location,
+        if (villageName != null && villageName.isNotEmpty) 'villageName': villageName,
+        if (subDistrict != null && subDistrict.isNotEmpty) 'subDistrict': subDistrict,
+        if (district != null && district.isNotEmpty) 'district': district,
+        if (province != null && province.isNotEmpty) 'province': province,
         'contactPerson': contactPerson,
         'phoneNumber': phoneNumber,
         'email': email,
@@ -760,6 +768,10 @@ class ApiClient {
     int communityId, {
     String? communityName,
     String? location,
+    String? villageName,
+    String? subDistrict,
+    String? district,
+    String? province,
     String? contactPerson,
     String? phoneNumber,
     String? email,
@@ -773,6 +785,10 @@ class ApiClient {
       
       if (communityName != null) body['communityName'] = communityName;
       if (location != null) body['location'] = location;
+      if (villageName != null) body['villageName'] = villageName;
+      if (subDistrict != null) body['subDistrict'] = subDistrict;
+      if (district != null) body['district'] = district;
+      if (province != null) body['province'] = province;
       if (contactPerson != null) body['contactPerson'] = contactPerson;
       if (phoneNumber != null) body['phoneNumber'] = phoneNumber;
       if (email != null) body['email'] = email;
