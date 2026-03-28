@@ -13,10 +13,7 @@ class LoginScreen extends StatefulWidget {
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
-
-class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
+nameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -46,6 +43,9 @@ class _LoginScreenState extends State<LoginScreen> {
         return Icons.public;
     }
   }
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _user
 
   @override
   Widget build(BuildContext context) {
@@ -226,10 +226,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                               ),
                         ),
-                        
-                        // Register Button (for community only)
-                        if (widget.userType == 'community') ...[
-                          const SizedBox(height: 16),
+                        edBox(height: 16),
                           OutlinedButton(
                             onPressed: () => _navigateToRegister(),
                             style: OutlinedButton.styleFrom(
@@ -289,6 +286,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (mounted) {
         if (success) {
+                        // Register Button (for community only)
+                        if (widget.userType == 'community') ...[
+                          const Siz
           // Navigate based on user type
           if (authProvider.isAdmin) {
             Navigator.pushReplacement(
