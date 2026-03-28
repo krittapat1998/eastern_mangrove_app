@@ -13,13 +13,16 @@ class LoginScreen extends StatefulWidget {
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
-nameController = TextEditingController();
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
 
   Color get _userTypeColor {
-    return const Color(0xFF2E7D32); // ใช้เขียวเข้มสำหรับทุก userType
+    return const Color(0xFF2E7D32);
   }
 
   String get _userTypeTitle {
@@ -43,9 +46,6 @@ nameController = TextEditingController();
         return Icons.public;
     }
   }
-class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _user
 
   @override
   Widget build(BuildContext context) {
@@ -226,7 +226,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                               ),
                         ),
-                        edBox(height: 16),
+                        
+                        // Register Button (for community only)
+                        if (widget.userType == 'community') ...[
+                          const SizedBox(height: 16),
                           OutlinedButton(
                             onPressed: () => _navigateToRegister(),
                             style: OutlinedButton.styleFrom(
@@ -286,9 +289,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (mounted) {
         if (success) {
-                        // Register Button (for community only)
-                        if (widget.userType == 'community') ...[
-                          const Siz
           // Navigate based on user type
           if (authProvider.isAdmin) {
             Navigator.pushReplacement(
