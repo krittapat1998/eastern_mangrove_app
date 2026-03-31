@@ -304,7 +304,7 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('ลบบัญชีสำเร็จ'), backgroundColor: Colors.green),
         );
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        Navigator.of(context).popUntil((route) => route.isFirst);
       } else {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
