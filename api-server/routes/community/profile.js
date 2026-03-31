@@ -267,4 +267,31 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
   }
 });
 
+// Delete own account
+router.delete('/account', authenticateToken, async (req, res, next) => {
+  try {
+    const userEmail = req.user.email;
+    const userId = req.user.userId;
+
+    await db.query('BEGIN');
+
+    // Delete community data
+    await db.query('DELETE FROM communities WHERE email = $1', [userEmail]);
+
+    // Delete user account
+    await db.query('DELETE FROM users WHERE id = $1', [userId]);
+
+    await db.query('COMMIT');
+
+    res.status(200).json({
+      success: true,
+      message: 'ลบบัญชีสำเร็จ'
+    });
+  } catch (error) {
+    await db.query('ROLLBACK');
+    console.error('❌ Delete account error:', error);
+    next(error);
+  }
+});
+
 module.exports = router;

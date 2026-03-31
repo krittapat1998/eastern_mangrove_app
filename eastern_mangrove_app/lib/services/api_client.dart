@@ -293,6 +293,25 @@ class ApiClient {
     }
   }
 
+  Future<ApiResponse<bool>> deleteAccount() async {
+    await _ensureTokenLoaded();
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/community/account'),
+        headers: _headers,
+      );
+      await _clearToken();
+      if (response.statusCode == 200) {
+        return ApiResponse.success(true, 'Account deleted successfully');
+      } else {
+        final data = json.decode(response.body);
+        return ApiResponse.error(data['message'] ?? 'Failed to delete account');
+      }
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
   // Community methods
   Future<ApiResponse<Map<String, dynamic>>> getCommunityProfileData() async {
     await _ensureTokenLoaded();
