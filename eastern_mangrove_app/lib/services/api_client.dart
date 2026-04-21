@@ -150,6 +150,7 @@ class ApiClient {
 
   // User registration
   Future<ApiResponse<Map<String, dynamic>>> register({
+    required String username,
     required String email,
     required String password,
     required String firstName,
@@ -162,6 +163,7 @@ class ApiClient {
         Uri.parse('$baseUrl/auth/register'),
         headers: _headers,
         body: json.encode({
+          'username': username,
           'email': email,
           'password': password,
           'firstName': firstName,

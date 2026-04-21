@@ -10,7 +10,7 @@ const SCHEMA = 'eastern_mangrove_communities';
 // Helper: generate JWT token
 function generateToken(user) {
   return jwt.sign(
-    { userId: user.id, email: user.email, userType: user.user_type },
+    { userId: user.id, username: user.username, userType: user.user_type },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
@@ -20,6 +20,7 @@ function generateToken(user) {
 function formatUser(user) {
   return {
     id: user.id,
+    username: user.username,
     email: user.email,
     firstName: user.first_name,
     lastName: user.last_name,
@@ -32,9 +33,9 @@ function formatUser(user) {
 
 // POST /api/auth/register
 router.post('/register', asyncHandler(async (req, res) => {
-  const { email, password, firstName, lastName, userType, phoneNumber } = req.body;
+  const { username, email, password, firstName, lastName, userType, phoneNumber } = req.body;
 
-  if (!email || !password || !firstName || !lastName || !userType) {
+  if (!username || !email || !password || !firstName || !lastName || !userType) {
     return res.status(400).json({ success: false, message: 'All required fields must be provided' });
   }
 
@@ -43,18 +44,18 @@ router.post('/register', asyncHandler(async (req, res) => {
   }
 
   const existing = await queryOne(
-    `SELECT id FROM ${SCHEMA}.users WHERE email = $1`,
-    [email.toLowerCase().trim()]
+    `SELECT id FROM ${SCHEMA}.users WHERE username = $1 OR email = $2`,
+    [username.toLowerCase().trim(), email.toLowerCase().trim()]
   );
   if (existing) {
-    return res.status(409).json({ success: false, message: 'Email is already registered' });
+    return res.status(409).json({ success: false, message: 'Username or Email is already registered' });
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
   const newUser = await queryOne(
-    `INSERT INTO ${SCHEMA}.users (email, password_hash, first_name, last_name, user_type, phone_number, is_active, is_approved)
-     VALUES ($1, $2, $3, $4, $5, $6, true, $7) RETURNING *`,
-    [email.toLowerCase().trim(), passwordHash, firstName, lastName, userType, phoneNumber || null, userType === 'admin']
+    `INSERT INTO ${SCHEMA}.users (username, email, password_hash, first_name, last_name, user_type, phone_number, is_active, is_approved)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8) RETURNING *`,
+    [username.toLowerCase().trim(), email.toLowerCase().trim(), passwordHash, firstName, lastName, userType, phoneNumber || null, userType === 'admin']
   );
 
   const token = generateToken(newUser);
@@ -68,30 +69,30 @@ router.post('/register', asyncHandler(async (req, res) => {
 // POST /api/auth/register-community
 router.post('/register-community', asyncHandler(async (req, res) => {
   const {
-    email, password, firstName, lastName, phoneNumber,
+    username, email, password, firstName, lastName, phoneNumber,
     communityName, location, contactPerson, description,
     establishedYear, memberCount,
   } = req.body;
 
-  if (!email || !password || !firstName || !lastName || !communityName || !contactPerson) {
+  if (!username || !email || !password || !firstName || !lastName || !communityName || !contactPerson) {
     return res.status(400).json({ success: false, message: 'All required fields must be provided' });
   }
 
   const existing = await queryOne(
-    `SELECT id FROM ${SCHEMA}.users WHERE email = $1`,
-    [email.toLowerCase().trim()]
+    `SELECT id FROM ${SCHEMA}.users WHERE username = $1 OR email = $2`,
+    [username.toLowerCase().trim(), email.toLowerCase().trim()]
   );
   if (existing) {
-    return res.status(409).json({ success: false, message: 'Email is already registered' });
+    return res.status(409).json({ success: false, message: 'Username or Email is already registered' });
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
 
   const result = await transaction(async (client) => {
     const userResult = await client.query(
-      `INSERT INTO ${SCHEMA}.users (email, password_hash, first_name, last_name, user_type, phone_number, is_active, is_approved)
-       VALUES ($1, $2, $3, $4, 'community', $5, true, false) RETURNING *`,
-      [email.toLowerCase().trim(), passwordHash, firstName, lastName, phoneNumber || null]
+      `INSERT INTO ${SCHEMA}.users (username, email, password_hash, first_name, last_name, user_type, phone_number, is_active, is_approved)
+       VALUES ($1, $2, $3, $4, $5, 'community', $6, true, false) RETURNING *`,
+      [username.toLowerCase().trim(), email.toLowerCase().trim(), passwordHash, firstName, lastName, phoneNumber || null]
     );
     const user = userResult.rows[0];
 
@@ -121,24 +122,24 @@ router.post('/register-community', asyncHandler(async (req, res) => {
 
 // POST /api/auth/login
 router.post('/login', asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { username, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ success: false, message: 'Email and password are required' });
+  if (!username || !password) {
+    return res.status(400).json({ success: false, message: 'Username and password are required' });
   }
 
   const user = await queryOne(
-    `SELECT * FROM ${SCHEMA}.users WHERE email = $1`,
-    [email.toLowerCase().trim()]
+    `SELECT * FROM ${SCHEMA}.users WHERE username = $1`,
+    [username.toLowerCase().trim()]
   );
 
   if (!user) {
-    return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    return res.status(401).json({ success: false, message: 'Invalid username or password' });
   }
 
   const isValid = await bcrypt.compare(password, user.password_hash);
   if (!isValid) {
-    return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    return res.status(401).json({ success: false, message: 'Invalid username or password' });
   }
 
   if (!user.is_active) {

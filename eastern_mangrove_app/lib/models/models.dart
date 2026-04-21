@@ -1,5 +1,6 @@
 class User {
   final int id;
+  final String username;
   final String email;
   final String firstName;
   final String lastName;
@@ -12,6 +13,7 @@ class User {
 
   User({
     required this.id,
+    required this.username,
     required this.email,
     required this.firstName,
     required this.lastName,
@@ -26,6 +28,7 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'],
+      username: json['username'],
       email: json['email'],
       firstName: json['firstName'] ?? json['first_name'],
       lastName: json['lastName'] ?? json['last_name'],
@@ -41,6 +44,7 @@ class User {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'username': username,
       'email': email,
       'firstName': firstName,
       'lastName': lastName,
@@ -226,31 +230,37 @@ class LoginRequest {
 
   Map<String, dynamic> toJson() {
     return {
-      'email': username, // Use email for login
+      'username': username,
       'password': password,
     };
   }
 }
 
 class CommunityRegistrationRequest {
+  final String username;
+  final String email;
+  final String password;
+  final String firstName;
+  final String lastName;
+  final String phoneNumber;
   final String communityName;
   final String location;
   final String contactPerson;
-  final String phoneNumber;
-  final String email;
-  final String password;
   final String? description;
   final int? establishedYear;
   final int? memberCount;
   final String? photoType;
 
   CommunityRegistrationRequest({
+    required this.username,
+    required this.email,
+    required this.password,
+    required this.firstName,
+    required this.lastName,
+    required this.phoneNumber,
     required this.communityName,
     required this.location,
     required this.contactPerson,
-    required this.phoneNumber,
-    required this.email,
-    required this.password,
     this.description,
     this.establishedYear,
     this.memberCount,
@@ -259,12 +269,15 @@ class CommunityRegistrationRequest {
 
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{
+      'username': username,
+      'email': email,
+      'password': password,
+      'firstName': firstName,
+      'lastName': lastName,
+      'phoneNumber': phoneNumber,
       'communityName': communityName,
       'location': location,
       'contactPerson': contactPerson,
-      'phoneNumber': phoneNumber,
-      'email': email,
-      'password': password,
     };
     
     // Only include optional fields if they have values

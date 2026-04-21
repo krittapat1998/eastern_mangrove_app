@@ -716,15 +716,19 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
       print('📞 Phone: ${_phoneController.text.trim()}');
       print('📧 Email: ${_emailController.text.trim()}');
       print('🔐 Password length: ${_passwordController.text.length} chars');
+      print('👤 Username: ${_usernameController.text.trim()}');
 
       // Create registration request
       final request = CommunityRegistrationRequest(
+        username: _usernameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        firstName: _contactPersonController.text.trim(),
+        lastName: '', // Using contactPerson as firstName, lastName empty
+        phoneNumber: _phoneController.text.trim(),
         communityName: _communityNameController.text.trim(),
         location: location,
         contactPerson: _contactPersonController.text.trim(),
-        phoneNumber: _phoneController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
         description: _descriptionController.text.trim().isEmpty 
             ? null 
             : _descriptionController.text.trim(),

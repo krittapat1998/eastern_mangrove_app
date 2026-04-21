@@ -50,6 +50,7 @@ class AuthProvider with ChangeNotifier {
             final userData = profileResponse.data!['user'];
             _user = User(
               id: userData['id'],
+              username: userData['username'],
               email: userData['email'],
               firstName: userData['firstName'] ?? userData['first_name'],
               lastName: userData['lastName'] ?? userData['last_name'],
@@ -74,18 +75,19 @@ class AuthProvider with ChangeNotifier {
   }
 
   // Login method
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(String username, String password) async {
     _setLoading(true);
     _setError(null);
 
     try {
-      final request = LoginRequest(username: email, password: password); // Using email as username
+      final request = LoginRequest(username: username, password: password);
       final response = await _apiClient.login(request);
 
       if (response.success && response.data != null) {
         final userData = response.data!['user'];
         _user = User(
           id: userData['id'],
+          username: userData['username'],
           email: userData['email'],
           firstName: userData['firstName'] ?? userData['first_name'],
           lastName: userData['lastName'] ?? userData['last_name'],
@@ -114,6 +116,7 @@ class AuthProvider with ChangeNotifier {
 
   // Register community method
   Future<bool> registerCommunity({
+    required String username,
     required String communityName,
     required String location,
     required String contactPerson,
@@ -129,13 +132,21 @@ class AuthProvider with ChangeNotifier {
     _setError(null);
 
     try {
+      // Split contactPerson into firstName and lastName
+      final nameParts = contactPerson.trim().split(' ');
+      final firstName = nameParts.first;
+      final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+
       final request = CommunityRegistrationRequest(
-        communityName: communityName,
-        location: location,
-        contactPerson: contactPerson,  
-        phoneNumber: phoneNumber,
+        username: username,
         email: email,
         password: password,
+        firstName: firstName,
+        lastName: lastName,
+        phoneNumber: phoneNumber,
+        communityName: communityName,
+        location: location,
+        contactPerson: contactPerson,
         description: description,
         establishedYear: establishedYear,
         memberCount: memberCount,
@@ -161,6 +172,7 @@ class AuthProvider with ChangeNotifier {
 
   // User registration method
   Future<bool> registerUser({
+    required String username,
     required String email,
     required String password,
     required String firstName,
@@ -173,6 +185,7 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final response = await _apiClient.register(
+        username: username,
         email: email,
         password: password,
         firstName: firstName,
@@ -185,6 +198,7 @@ class AuthProvider with ChangeNotifier {
         final userData = response.data!['user'];
         _user = User(
           id: userData['id'],
+          username: userData['username'],
           email: userData['email'],
           firstName: userData['firstName'] ?? userData['first_name'],
           lastName: userData['lastName'] ?? userData['last_name'],

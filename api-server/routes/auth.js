@@ -12,7 +12,7 @@ const generateToken = (user) => {
   return jwt.sign(
     {
       userId: user.id,
-      email: user.email,
+      username: user.username,
       userType: user.user_type
     },
     process.env.JWT_SECRET,
@@ -23,19 +23,19 @@ const generateToken = (user) => {
 // User Registration
 router.post('/register', validate(schemas.userRegistration), async (req, res, next) => {
   try {
-    const { email, password, firstName, lastName, userType, phoneNumber } = req.body;
+    const { username, email, password, firstName, lastName, userType, phoneNumber } = req.body;
 
     // Check if user already exists
     const existingUser = await db.query(
-      'SELECT email FROM users WHERE email = $1',
-      [email]
+      'SELECT username, email FROM users WHERE username = $1 OR email = $2',
+      [username.toLowerCase(), email]
     );
 
     if (existingUser.rows.length > 0) {
       return res.status(409).json({
         success: false,
         error: 'Registration failed',
-        message: 'User with this email already exists'
+        message: 'User with this username or email already exists'
       });
     }
 
@@ -45,10 +45,10 @@ router.post('/register', validate(schemas.userRegistration), async (req, res, ne
 
     // Insert new user
     const result = await db.query(`
-      INSERT INTO users (email, password_hash, first_name, last_name, user_type, phone_number, created_at, is_active)
-      VALUES ($1, $2, $3, $4, $5, $6, NOW(), true)
-      RETURNING id, email, first_name, last_name, user_type, phone_number, created_at
-    `, [email, hashedPassword, firstName, lastName, userType, phoneNumber]);
+      INSERT INTO users (username, email, password_hash, first_name, last_name, user_type, phone_number, created_at, is_active)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), true)
+      RETURNING id, username, email, first_name, last_name, user_type, phone_number, created_at
+    `, [username.toLowerCase(), email, hashedPassword, firstName, lastName, userType, phoneNumber]);
 
     const newUser = result.rows[0];
 
@@ -62,6 +62,7 @@ router.post('/register', validate(schemas.userRegistration), async (req, res, ne
         token,
         user: {
           id: newUser.id,
+          username: newUser.username,
           email: newUser.email,
           firstName: newUser.first_name,
           lastName: newUser.last_name,
@@ -80,19 +81,19 @@ router.post('/register', validate(schemas.userRegistration), async (req, res, ne
 // User Login
 router.post('/login', validate(schemas.userLogin), async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    // Find user by email
+    // Find user by username
     const result = await db.query(
-      'SELECT * FROM users WHERE email = $1 AND is_active = true',
-      [email]
+      'SELECT * FROM users WHERE username = $1 AND is_active = true',
+      [username.toLowerCase()]
     );
 
     if (result.rows.length === 0) {
       return res.status(401).json({
         success: false,
         error: 'Authentication failed',
-        message: 'Invalid email or password'
+        message: 'Invalid username or password'
       });
     }
 
@@ -105,7 +106,7 @@ router.post('/login', validate(schemas.userLogin), async (req, res, next) => {
       return res.status(401).json({
         success: false,
         error: 'Authentication failed',
-        message: 'Invalid email or password'
+        message: 'Invalid username or password'
       });
     }
 
@@ -125,6 +126,7 @@ router.post('/login', validate(schemas.userLogin), async (req, res, next) => {
         token,
         user: {
           id: user.id,
+          username: user.username,
           email: user.email,
           firstName: user.first_name,
           lastName: user.last_name,
