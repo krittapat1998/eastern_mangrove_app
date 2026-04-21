@@ -17,6 +17,11 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
   bool _isEditing = false;
   String? _errorMessage;
   Map<String, dynamic>? _profileData;
+  Map<String, dynamic>? _userData;
+
+  // User Account Info
+  String _username = '';
+  final _userEmailController = TextEditingController();
 
   // Form Controllers - Basic Info
   final _communityNameController = TextEditingController();
@@ -62,6 +67,8 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
 
   @override
   void dispose() {
+    // User Account
+    _userEmailController.dispose();
     // Basic Info
     _communityNameController.dispose();
     _descriptionController.dispose();
@@ -102,9 +109,15 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
       if (response.success && response.data != null) {
         final profile = response.data!;
         final communityData = profile['community'] ?? profile;
+        final userData = profile['user'];
         
         setState(() {
           _profileData = communityData;
+          _userData = userData;
+          if (userData != null) {
+            _username = userData['username'] ?? '';
+            _userEmailController.text = userData['email'] ?? '';
+          }
           _populateForm(communityData);
           _isLoading = false;
         });
@@ -270,6 +283,74 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
     }
   }
 
+  Future<void> _updateUserEmail() async {
+    final newEmail = _userEmailController.text.trim();
+    
+    if (newEmail.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('กรุณาระบุอีเมล'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validate email format
+    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+    if (!emailRegex.hasMatch(newEmail)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('รูปแบบอีเมลไม่ถูกต้อง'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await _apiClient.updateUserEmail(newEmail);
+      
+      if (response.success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('อัพเดทอีเมลสำเร็จ'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+        await _loadProfile();
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.error ?? 'เกิดข้อผิดพลาดในการอัพเดทอีเมล'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('เกิดข้อผิดพลาด: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   Future<void> _showDeleteAccountDialog() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -406,7 +487,99 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Section 0: Account Information
+                  _buildSectionTitle('ข้อมูลบัญชี', Icons.account_circle),
+                  const SizedBox(height: 16),
+                  // Username (Read-only)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.person, color: Colors.grey.shade600),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'ชื่อผู้ใช้ (Username)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _username.isNotEmpty ? _username : '-',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Email (Editable)
+                  TextFormField(
+                    controller: _userEmailController,
+                    decoration: InputDecoration(
+                      labelText: 'อีเมล (สำหรับติดต่อ)',
+                      prefixIcon: const Icon(Icons.email, color: Color(0xFF2E7D32)),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.save, color: Color(0xFF2E7D32)),
+                        onPressed: _updateUserEmail,
+                        tooltip: 'บันทึกอีเมล',
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'กรุณากรอกอีเมล';
+                      }
+                      final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+                      if (!emailRegex.hasMatch(value)) {
+                        return 'รูปแบบอีเมลไม่ถูกต้อง';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      '💡 คุณสามารถแก้ไขอีเมลได้โดยกดปุ่มบันทึกด้านขวา',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+
                   // Section 1: Basic Info
+                  const SizedBox(height: 32),
                   _buildSectionTitle('ข้อมูลพื้นฐาน', Icons.info),
                   const SizedBox(height: 16),
                   _buildTextField(

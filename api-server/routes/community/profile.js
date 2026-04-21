@@ -10,6 +10,23 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
     // Get user info from token
     const userId = req.user.userId;
     const userEmail = req.user.email;
+    const username = req.user.username;
+    
+    // Get user data from users table
+    const userResult = await db.query(`
+      SELECT id, username, email, role
+      FROM users
+      WHERE id = $1
+    `, [userId]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบข้อมูลผู้ใช้'
+      });
+    }
+
+    const userData = userResult.rows[0];
     
     // Find community associated with this user
     const result = await db.query(`
@@ -63,6 +80,12 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
       success: true,
       message: 'ดึงข้อมูลชุมชนสำเร็จ',
       data: {
+        user: {
+          id: userData.id,
+          username: userData.username,
+          email: userData.email,
+          role: userData.role
+        },
         community: {
           id: community.id,
           name: community.community_name,
@@ -263,6 +286,75 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
 
   } catch (error) {
     console.error('❌ Community profile update error:', error);
+    next(error);
+  }
+});
+
+// Update user email
+router.put('/account/email', authenticateToken, async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณาระบุอีเมล'
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'รูปแบบอีเมลไม่ถูกต้อง'
+      });
+    }
+
+    // Check if email already exists
+    const checkResult = await db.query(
+      'SELECT id FROM users WHERE email = $1 AND id != $2',
+      [email, userId]
+    );
+
+    if (checkResult.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'อีเมลนี้ถูกใช้งานแล้ว'
+      });
+    }
+
+    // Update user email
+    const updateResult = await db.query(
+      'UPDATE users SET email = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, username, email, role',
+      [email, userId]
+    );
+
+    if (updateResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบข้อมูลผู้ใช้'
+      });
+    }
+
+    const updatedUser = updateResult.rows[0];
+
+    res.status(200).json({
+      success: true,
+      message: 'อัพเดทอีเมลสำเร็จ',
+      data: {
+        user: {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          email: updatedUser.email,
+          role: updatedUser.role
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Update email error:', error);
     next(error);
   }
 });

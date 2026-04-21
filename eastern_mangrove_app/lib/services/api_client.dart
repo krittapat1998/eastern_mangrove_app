@@ -349,6 +349,27 @@ class ApiClient {
     }
   }
 
+  Future<ApiResponse<Map<String, dynamic>>> updateUserEmail(String email) async {
+    await _ensureTokenLoaded();
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/community/account/email'),
+        headers: _headers,
+        body: json.encode({'email': email}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return ApiResponse.success(data['data'], data['message'] ?? 'Email updated successfully');
+      } else {
+        final data = json.decode(response.body);
+        return ApiResponse.error(data['message'] ?? 'Failed to update email');
+      }
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
   Future<ApiResponse<Map<String, dynamic>>> updateCommunityProfile(Map<String, dynamic> profileData) async {
     await _ensureTokenLoaded();
     try {
