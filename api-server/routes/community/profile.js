@@ -15,7 +15,7 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
     // Get user data from users table
     const userResult = await db.query(`
       SELECT id, username, email, role
-      FROM users
+      FROM eastern_mangrove_communities.users
       WHERE id = $1
     `, [userId]);
 
@@ -64,7 +64,7 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
         c.average_income,
         c.created_at,
         c.updated_at
-      FROM communities c
+      FROM eastern_mangrove_communities.communities c
       WHERE c.user_id = $1 OR c.email = $2
       ORDER BY c.user_id NULLS LAST
       LIMIT 1
@@ -139,7 +139,7 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
     
     // Get user email from database
     const userResult = await db.query(
-      'SELECT email FROM users WHERE id = $1',
+      'SELECT email FROM eastern_mangrove_communities.users WHERE id = $1',
       [userId]
     );
 
@@ -196,7 +196,7 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
 
     // Find community by user_id or email (for backward compatibility)
     const communityResult = await db.query(
-      'SELECT id FROM communities WHERE (user_id = $1 OR email = $2) AND registration_status = $3 ORDER BY user_id NULLS LAST LIMIT 1',
+      'SELECT id FROM eastern_mangrove_communities.communities WHERE (user_id = $1 OR email = $2) AND registration_status = $3 ORDER BY user_id NULLS LAST LIMIT 1',
       [userId, userEmail, 'approved']
     );
 
@@ -211,7 +211,7 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
 
     // Update community data
     const updateResult = await db.query(`
-      UPDATE communities 
+      UPDATE eastern_mangrove_communities.communities 
       SET 
         community_name = COALESCE($1, community_name),
         village_name = COALESCE($2, village_name),
@@ -333,7 +333,7 @@ router.put('/account/email', authenticateToken, async (req, res, next) => {
 
     // Check if email already exists
     const checkResult = await db.query(
-      'SELECT id FROM users WHERE email = $1 AND id != $2',
+      'SELECT id FROM eastern_mangrove_communities.users WHERE email = $1 AND id != $2',
       [email, userId]
     );
 
@@ -346,7 +346,7 @@ router.put('/account/email', authenticateToken, async (req, res, next) => {
 
     // Update user email
     const updateResult = await db.query(
-      'UPDATE users SET email = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, username, email, role',
+      'UPDATE eastern_mangrove_communities.users SET email = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, username, email, role',
       [email, userId]
     );
 
@@ -385,7 +385,7 @@ router.delete('/account', authenticateToken, async (req, res, next) => {
 
     // Get user email from database
     const userResult = await db.query(
-      'SELECT email FROM users WHERE id = $1',
+      'SELECT email FROM eastern_mangrove_communities.users WHERE id = $1',
       [userId]
     );
 
@@ -401,10 +401,10 @@ router.delete('/account', authenticateToken, async (req, res, next) => {
     await db.query('BEGIN');
 
     // Delete community data (by user_id or email for backward compatibility)
-    await db.query('DELETE FROM communities WHERE user_id = $1 OR email = $2', [userId, userEmail]);
+    await db.query('DELETE FROM eastern_mangrove_communities.communities WHERE user_id = $1 OR email = $2', [userId, userEmail]);
 
     // Delete user account
-    await db.query('DELETE FROM users WHERE id = $1', [userId]);
+    await db.query('DELETE FROM eastern_mangrove_communities.users WHERE id = $1', [userId]);
 
     await db.query('COMMIT');
 
