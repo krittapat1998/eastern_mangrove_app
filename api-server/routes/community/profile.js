@@ -355,6 +355,24 @@ router.put('/account/email', authenticateToken, async (req, res, next) => {
       });
     }
 
+    // Get old email before update
+    const oldEmailResult = await db.query(
+      'SELECT email FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (oldEmailResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบข้อมูลผู้ใช้'
+      });
+    }
+
+    const oldEmail = oldEmailResult.rows[0].email;
+
+    // Start transaction
+    await db.query('BEGIN');
+
     // Update user email
     const updateResult = await db.query(
       'UPDATE users SET email = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, username, email, user_type',
@@ -362,11 +380,20 @@ router.put('/account/email', authenticateToken, async (req, res, next) => {
     );
 
     if (updateResult.rows.length === 0) {
+      await db.query('ROLLBACK');
       return res.status(404).json({
         success: false,
         message: 'ไม่พบข้อมูลผู้ใช้'
       });
     }
+
+    // Update community email if exists (using old email to find community)
+    await db.query(
+      'UPDATE eastern_mangrove_communities.communities SET email = $1, updated_at = CURRENT_TIMESTAMP WHERE email = $2',
+      [email, oldEmail]
+    );
+
+    await db.query('COMMIT');
 
     const updatedUser = updateResult.rows[0];
 
@@ -384,6 +411,7 @@ router.put('/account/email', authenticateToken, async (req, res, next) => {
     });
 
   } catch (error) {
+    await db.query('ROLLBACK');
     console.error('❌ Update email error:', error);
     next(error);
   }
