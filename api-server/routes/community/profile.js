@@ -28,8 +28,10 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
 
     const userData = userResult.rows[0];
     
-    // Find community associated with this user
-    // Try by user_id first (new method), fallback to email (old method)
+    console.log(`🔍 Looking for community with email: ${userData.email}`);
+    
+    // Find community associated with this user by email
+    // Note: Using email match until user_id column is added via migration
     const result = await db.query(`
       SELECT 
         c.id,
@@ -65,12 +67,14 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
         c.created_at,
         c.updated_at
       FROM eastern_mangrove_communities.communities c
-      WHERE c.user_id = $1 OR c.email = $2
-      ORDER BY c.user_id NULLS LAST
+      WHERE c.email = $1
       LIMIT 1
-    `, [userId, userData.email]);
+    `, [userData.email]);
+
+    console.log(`📊 Found ${result.rows.length} community records`);
 
     if (result.rows.length === 0) {
+      console.log(`❌ No community found for email: ${userData.email}`);
       return res.status(404).json({
         success: false,
         message: 'ไม่พบข้อมูลชุมชนที่ลงทะเบียนแล้ว'
@@ -78,6 +82,7 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
     }
 
     const community = result.rows[0];
+    console.log(`✅ Found community: ${community.community_name} (ID: ${community.id})`);
     
     res.status(200).json({
       success: true,
@@ -194,10 +199,10 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
     const sanitizedSocialMedia = normalizeArrayField(socialMedia);
     const sanitizedMangroveSpecies = normalizeArrayField(mangroveSpecies);
 
-    // Find community by user_id or email (for backward compatibility)
+    // Find community by email (until user_id column is added)
     const communityResult = await db.query(
-      'SELECT id FROM eastern_mangrove_communities.communities WHERE (user_id = $1 OR email = $2) AND registration_status = $3 ORDER BY user_id NULLS LAST LIMIT 1',
-      [userId, userEmail, 'approved']
+      'SELECT id FROM eastern_mangrove_communities.communities WHERE email = $1 AND registration_status = $2 LIMIT 1',
+      [userEmail, 'approved']
     );
 
     if (communityResult.rows.length === 0) {
@@ -400,8 +405,8 @@ router.delete('/account', authenticateToken, async (req, res, next) => {
 
     await db.query('BEGIN');
 
-    // Delete community data (by user_id or email for backward compatibility)
-    await db.query('DELETE FROM eastern_mangrove_communities.communities WHERE user_id = $1 OR email = $2', [userId, userEmail]);
+    // Delete community data by email (until user_id column is added)
+    await db.query('DELETE FROM eastern_mangrove_communities.communities WHERE email = $1', [userEmail]);
 
     // Delete user account
     await db.query('DELETE FROM eastern_mangrove_communities.users WHERE id = $1', [userId]);
