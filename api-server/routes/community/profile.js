@@ -15,7 +15,7 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
     // Get user data from users table
     const userResult = await db.query(`
       SELECT id, username, email, user_type
-      FROM eastern_mangrove_communities.users
+      FROM users
       WHERE id = $1
     `, [userId]);
 
@@ -92,7 +92,7 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
           id: userData.id,
           username: userData.username,
           email: userData.email,
-          role: userData.role
+          userType: userData.user_type
         },
         community: {
           id: community.id,
@@ -144,7 +144,7 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
     
     // Get user email from database
     const userResult = await db.query(
-      'SELECT email FROM eastern_mangrove_communities.users WHERE id = $1',
+      'SELECT email FROM users WHERE id = $1',
       [userId]
     );
 
@@ -338,7 +338,7 @@ router.put('/account/email', authenticateToken, async (req, res, next) => {
 
     // Check if email already exists
     const checkResult = await db.query(
-      'SELECT id FROM eastern_mangrove_communities.users WHERE email = $1 AND id != $2',
+      'SELECT id FROM users WHERE email = $1 AND id != $2',
       [email, userId]
     );
 
@@ -351,7 +351,7 @@ router.put('/account/email', authenticateToken, async (req, res, next) => {
 
     // Update user email
     const updateResult = await db.query(
-      'UPDATE eastern_mangrove_communities.users SET email = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, username, email, role',
+      'UPDATE users SET email = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, username, email, user_type',
       [email, userId]
     );
 
@@ -372,7 +372,7 @@ router.put('/account/email', authenticateToken, async (req, res, next) => {
           id: updatedUser.id,
           username: updatedUser.username,
           email: updatedUser.email,
-          role: updatedUser.role
+          userType: updatedUser.user_type
         }
       }
     });
@@ -390,7 +390,7 @@ router.delete('/account', authenticateToken, async (req, res, next) => {
 
     // Get user email from database
     const userResult = await db.query(
-      'SELECT email FROM eastern_mangrove_communities.users WHERE id = $1',
+      'SELECT email FROM users WHERE id = $1',
       [userId]
     );
 
@@ -409,7 +409,7 @@ router.delete('/account', authenticateToken, async (req, res, next) => {
     await db.query('DELETE FROM eastern_mangrove_communities.communities WHERE email = $1', [userEmail]);
 
     // Delete user account
-    await db.query('DELETE FROM eastern_mangrove_communities.users WHERE id = $1', [userId]);
+    await db.query('DELETE FROM users WHERE id = $1', [userId]);
 
     await db.query('COMMIT');
 
