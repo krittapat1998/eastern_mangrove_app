@@ -28,7 +28,8 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
 
     const userData = userResult.rows[0];
     
-    // Find community associated with this user (use email from userData)
+    // Find community associated with this user
+    // Try by user_id first (new method), fallback to email (old method)
     const result = await db.query(`
       SELECT 
         c.id,
@@ -64,8 +65,10 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
         c.created_at,
         c.updated_at
       FROM communities c
-      WHERE c.email = $1
-    `, [userData.email]);
+      WHERE c.user_id = $1 OR c.email = $2
+      ORDER BY c.user_id NULLS LAST
+      LIMIT 1
+    `, [userId, userData.email]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({
@@ -191,10 +194,10 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
     const sanitizedSocialMedia = normalizeArrayField(socialMedia);
     const sanitizedMangroveSpecies = normalizeArrayField(mangroveSpecies);
 
-    // Find community
+    // Find community by user_id or email (for backward compatibility)
     const communityResult = await db.query(
-      'SELECT id FROM communities WHERE email = $1 AND registration_status = $2',
-      [userEmail, 'approved']
+      'SELECT id FROM communities WHERE (user_id = $1 OR email = $2) AND registration_status = $3 ORDER BY user_id NULLS LAST LIMIT 1',
+      [userId, userEmail, 'approved']
     );
 
     if (communityResult.rows.length === 0) {
@@ -397,8 +400,8 @@ router.delete('/account', authenticateToken, async (req, res, next) => {
 
     await db.query('BEGIN');
 
-    // Delete community data
-    await db.query('DELETE FROM communities WHERE email = $1', [userEmail]);
+    // Delete community data (by user_id or email for backward compatibility)
+    await db.query('DELETE FROM communities WHERE user_id = $1 OR email = $2', [userId, userEmail]);
 
     // Delete user account
     await db.query('DELETE FROM users WHERE id = $1', [userId]);
