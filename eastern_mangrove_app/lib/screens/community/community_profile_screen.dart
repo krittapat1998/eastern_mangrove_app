@@ -532,7 +532,7 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
                   TextFormField(
                     controller: _userEmailController,
                     decoration: InputDecoration(
-                      labelText: 'อีเมล (สำหรับติดต่อ)',
+                      labelText: 'อีเมลบัญชีผู้ใช้ (สำหรับ login)',
                       prefixIcon: const Icon(Icons.email, color: Color(0xFF2E7D32)),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.save, color: Color(0xFF2E7D32)),
@@ -661,7 +661,7 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
                   const SizedBox(height: 16),
                   _buildTextField(
                     controller: _emailController,
-                    label: 'อีเมล',
+                    label: 'อีเมลของชุมชน (สำหรับแสดงต่อสาธารณะ)',
                     icon: Icons.email,
                     enabled: _isEditing,
                     keyboardType: TextInputType.emailAddress,
