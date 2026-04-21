@@ -14,7 +14,7 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
     
     // Get user data from users table
     const userResult = await db.query(`
-      SELECT id, username, email, role
+      SELECT id, username, email, user_type
       FROM eastern_mangrove_communities.users
       WHERE id = $1
     `, [userId]);
