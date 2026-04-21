@@ -12,14 +12,19 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
     const userEmail = req.user.email;
     const username = req.user.username;
     
+    console.log(`👤 Getting profile for userId: ${userId}, username: ${username}`);
+    
     // Get user data from users table
     const userResult = await db.query(`
       SELECT id, username, email, user_type
-      FROM users
+      FROM public.users
       WHERE id = $1
     `, [userId]);
 
+    console.log(`📊 User query result: ${userResult.rows.length} rows found`);
+
     if (userResult.rows.length === 0) {
+      console.log(`❌ No user found with id: ${userId}`);
       return res.status(404).json({
         success: false,
         message: 'ไม่พบข้อมูลผู้ใช้'
@@ -27,6 +32,7 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
     }
 
     const userData = userResult.rows[0];
+    console.log(`✅ Found user: ${userData.username}, email: ${userData.email}`);
     
     console.log(`🔍 Looking for community with email: ${userData.email}`);
     
@@ -144,7 +150,7 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
     
     // Get user email from database
     const userResult = await db.query(
-      'SELECT email FROM users WHERE id = $1',
+      'SELECT email FROM public.users WHERE id = $1',
       [userId]
     );
 
@@ -338,7 +344,7 @@ router.put('/account/email', authenticateToken, async (req, res, next) => {
 
     // Check if email already exists
     const checkResult = await db.query(
-      'SELECT id FROM users WHERE email = $1 AND id != $2',
+      'SELECT id FROM public.users WHERE email = $1 AND id != $2',
       [email, userId]
     );
 
@@ -351,7 +357,7 @@ router.put('/account/email', authenticateToken, async (req, res, next) => {
 
     // Update user email
     const updateResult = await db.query(
-      'UPDATE users SET email = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, username, email, user_type',
+      'UPDATE public.users SET email = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, username, email, user_type',
       [email, userId]
     );
 
@@ -390,7 +396,7 @@ router.delete('/account', authenticateToken, async (req, res, next) => {
 
     // Get user email from database
     const userResult = await db.query(
-      'SELECT email FROM users WHERE id = $1',
+      'SELECT email FROM public.users WHERE id = $1',
       [userId]
     );
 
@@ -409,7 +415,7 @@ router.delete('/account', authenticateToken, async (req, res, next) => {
     await db.query('DELETE FROM eastern_mangrove_communities.communities WHERE email = $1', [userEmail]);
 
     // Delete user account
-    await db.query('DELETE FROM users WHERE id = $1', [userId]);
+    await db.query('DELETE FROM public.users WHERE id = $1', [userId]);
 
     await db.query('COMMIT');
 
