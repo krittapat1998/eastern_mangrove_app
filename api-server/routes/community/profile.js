@@ -28,7 +28,7 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
 
     const userData = userResult.rows[0];
     
-    // Find community associated with this user
+    // Find community associated with this user (use email from userData)
     const result = await db.query(`
       SELECT 
         c.id,
@@ -65,7 +65,7 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
         c.updated_at
       FROM communities c
       WHERE c.email = $1
-    `, [userEmail]);
+    `, [userData.email]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({
@@ -132,7 +132,23 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
 // Update community profile
 router.put('/profile', authenticateToken, async (req, res, next) => {
   try {
-    const userEmail = req.user.email;
+    const userId = req.user.userId;
+    
+    // Get user email from database
+    const userResult = await db.query(
+      'SELECT email FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบข้อมูลผู้ใช้'
+      });
+    }
+
+    const userEmail = userResult.rows[0].email;
+
     const {
       name,
       villageName,
@@ -362,8 +378,22 @@ router.put('/account/email', authenticateToken, async (req, res, next) => {
 // Delete own account
 router.delete('/account', authenticateToken, async (req, res, next) => {
   try {
-    const userEmail = req.user.email;
     const userId = req.user.userId;
+
+    // Get user email from database
+    const userResult = await db.query(
+      'SELECT email FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบข้อมูลผู้ใช้'
+      });
+    }
+
+    const userEmail = userResult.rows[0].email;
 
     await db.query('BEGIN');
 
