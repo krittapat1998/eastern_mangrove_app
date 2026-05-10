@@ -173,6 +173,7 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
       areaSize,
       contactPerson,
       phoneNumber,
+      email,
       websiteUrl,
       socialMedia,
       totalPopulation,
@@ -233,22 +234,23 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
         area_size = COALESCE($7, area_size),
         contact_person = COALESCE($8, contact_person),
         phone_number = COALESCE($9, phone_number),
-        website_url = COALESCE($10, website_url),
-        social_media = COALESCE($11, social_media),
-        total_population = COALESCE($12, total_population),
-        resource_dependent_population = COALESCE($13, resource_dependent_population),
-        households = COALESCE($14, households),
-        main_occupation = COALESCE($15, main_occupation),
-        main_religion = COALESCE($16, main_religion),
-        occupations = COALESCE($17, occupations),
-        average_income = COALESCE($18, average_income),
-        mangrove_species = COALESCE($19, mangrove_species),
-        conservation_status = COALESCE($20, conservation_status),
-        description = COALESCE($21, description),
-        established_year = COALESCE($22, established_year),
-        member_count = COALESCE($23, member_count),
+        email = COALESCE($10, email),
+        website_url = COALESCE($11, website_url),
+        social_media = COALESCE($12, social_media),
+        total_population = COALESCE($13, total_population),
+        resource_dependent_population = COALESCE($14, resource_dependent_population),
+        households = COALESCE($15, households),
+        main_occupation = COALESCE($16, main_occupation),
+        main_religion = COALESCE($17, main_religion),
+        occupations = COALESCE($18, occupations),
+        average_income = COALESCE($19, average_income),
+        mangrove_species = COALESCE($20, mangrove_species),
+        conservation_status = COALESCE($21, conservation_status),
+        description = COALESCE($22, description),
+        established_year = COALESCE($23, established_year),
+        member_count = COALESCE($24, member_count),
         updated_at = NOW()
-      WHERE id = $24
+      WHERE id = $25
       RETURNING *
     `, [
       name,
@@ -260,6 +262,7 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
       areaSize,
       contactPerson,
       phoneNumber,
+      email,
       websiteUrl,
       sanitizedSocialMedia, // Use sanitized value
       totalPopulation,
@@ -444,7 +447,7 @@ router.put('/account/password', authenticateToken, async (req, res, next) => {
 
     // Update password
     const updateResult = await db.query(
-      'UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, username, email, user_type',
+      'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, username, email, user_type',
       [hashedPassword, userId]
     );
 
