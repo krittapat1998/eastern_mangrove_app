@@ -417,6 +417,65 @@ router.put('/account/email', authenticateToken, async (req, res, next) => {
   }
 });
 
+// Update password
+router.put('/account/password', authenticateToken, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณาระบุรหัสผ่านใหม่'
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'
+      });
+    }
+
+    // Hash password
+    const bcrypt = require('bcrypt');
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Update password
+    const updateResult = await db.query(
+      'UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, username, email, user_type',
+      [hashedPassword, userId]
+    );
+
+    if (updateResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบข้อมูลผู้ใช้'
+      });
+    }
+
+    const updatedUser = updateResult.rows[0];
+
+    res.status(200).json({
+      success: true,
+      message: 'เปลี่ยนรหัสผ่านสำเร็จ',
+      data: {
+        user: {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          email: updatedUser.email,
+          userType: updatedUser.user_type
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Update password error:', error);
+    next(error);
+  }
+});
+
 // Delete own account
 router.delete('/account', authenticateToken, async (req, res, next) => {
   try {

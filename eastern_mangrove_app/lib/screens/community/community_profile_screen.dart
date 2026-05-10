@@ -21,8 +21,8 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
 
   // User Account Info
   String _username = '';
-  String _originalUserEmail = '';
-  final _userEmailController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   // Form Controllers - Basic Info
   final _communityNameController = TextEditingController();
@@ -117,8 +117,6 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
           _userData = userData;
           if (userData != null) {
             _username = userData['username'] ?? '';
-            _originalUserEmail = userData['email'] ?? '';
-            _userEmailController.text = _originalUserEmail;
           }
           _populateForm(communityData);
           _isLoading = false;
@@ -202,12 +200,44 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
     });
 
     try {
-      // First, update user email if changed
-      final newEmail = _userEmailController.text.trim();
-      if (newEmail != _originalUserEmail && newEmail.isNotEmpty) {
-        final emailResponse = await _apiClient.updateUserEmail(newEmail);
-        if (!emailResponse.success) {
-          final errMsg = emailResponse.error ?? 'ไม่สามารถอัพเดทอีเมลได้';
+      // First, update password if provided
+      final newPassword = _newPasswordController.text.trim();
+      final confirmPassword = _confirmPasswordController.text.trim();
+      
+      if (newPassword.isNotEmpty || confirmPassword.isNotEmpty) {
+        if (newPassword != confirmPassword) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('รหัสผ่านไม่ตรงกัน'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
+        
+        if (newPassword.length < 6) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
+        
+        final passwordResponse = await _apiClient.updatePassword(newPassword);
+        if (!passwordResponse.success) {
+          final errMsg = passwordResponse.error ?? 'ไม่สามารถอัพเดทรหัสผ่านได้';
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -221,9 +251,13 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
           });
           return;
         }
+        
+        // Clear password fields after successful update
+        _newPasswordController.clear();
+        _confirmPasswordController.clear();
       }
 
-    try {
+      // Then, update community profile
       final updateData = {
         // Basic Info
         'name': _communityNameController.text,
@@ -485,61 +519,115 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // Email (Editable)
-                  TextFormField(
-                    controller: _userEmailController,
-                    enabled: _isEditing,
-                    decoration: InputDecoration(
-                      labelText: 'อีเมลบัญชีผู้ใช้',
-                      prefixIcon: Icon(
-                        Icons.email,
-                        color: _isEditing ? const Color(0xFF2E7D32) : Colors.grey,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      disabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade200),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
-                      ),
-                      filled: true,
-                      fillColor: _isEditing ? Colors.white : Colors.grey.shade100,
-                    ),
-                    style: TextStyle(
-                      color: _isEditing ? Colors.black87 : Colors.grey.shade600,
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'กรุณากรอกอีเมล';
-                      }
-                      final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-                      if (!emailRegex.hasMatch(value)) {
-                        return 'รูปแบบอีเมลไม่ถูกต้อง';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      '💡 คุณสามารถแก้ไขอีเมลได้โดยกดปุ่มบันทึกด้านขวา',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                        fontStyle: FontStyle.italic,
+                  // Change Password Section
+                  if (_isEditing) ..[
+                    TextFormField(
+                      controller: _newPasswordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'รหัสผ่านใหม่ (ถ้าต้องการเปลี่ยน)',
+                        prefixIcon: const Icon(
+                          Icons.lock,
+                          color: Color(0xFF2E7D32),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'ยืนยันรหัสผ่านใหม่',
+                        prefixIcon: const Icon(
+                          Icons.lock_outline,
+                          color: Color(0xFF2E7D32),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        '💡 เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน (ต้องมีอย่างน้อย 6 ตัวอักษร)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ] else ..[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.lock, color: Colors.grey.shade600),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'รหัสผ่าน',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  '••••••••',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            'กดแก้ไขเพื่อเปลี่ยนรหัสผ่าน',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
 
                   // Section 1: Basic Info
                   const SizedBox(height: 32),

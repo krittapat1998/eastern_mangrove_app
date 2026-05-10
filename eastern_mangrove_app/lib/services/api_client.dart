@@ -370,6 +370,27 @@ class ApiClient {
     }
   }
 
+  Future<ApiResponse<Map<String, dynamic>>> updatePassword(String newPassword) async {
+    await _ensureTokenLoaded();
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/community/account/password'),
+        headers: _headers,
+        body: json.encode({'password': newPassword}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return ApiResponse.success(data['data'], data['message'] ?? 'Password updated successfully');
+      } else {
+        final data = json.decode(response.body);
+        return ApiResponse.error(data['message'] ?? 'Failed to update password');
+      }
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
   Future<ApiResponse<Map<String, dynamic>>> updateCommunityProfile(Map<String, dynamic> profileData) async {
     await _ensureTokenLoaded();
     try {
