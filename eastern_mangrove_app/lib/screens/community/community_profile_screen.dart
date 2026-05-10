@@ -69,7 +69,8 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
   @override
   void dispose() {
     // User Account
-    _userEmailController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     // Basic Info
     _communityNameController.dispose();
     _descriptionController.dispose();
@@ -520,7 +521,7 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
                   ),
                   const SizedBox(height: 16),
                   // Change Password Section
-                  if (_isEditing) ..[
+                  if (_isEditing) ...[
                     TextFormField(
                       controller: _newPasswordController,
                       obscureText: true,
@@ -582,7 +583,7 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
                         ),
                       ),
                     ),
-                  ] else ..[
+                  ] else ...[ 
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
