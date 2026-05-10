@@ -1,6 +1,6 @@
 # Test Credentials - Eastern Mangrove Communities App
 
-**Last Updated:** March 10, 2026
+**Last Updated:** May 11, 2026
 
 ---
 
@@ -19,8 +19,8 @@
 
 ### 1️⃣ Administrator
 ```
-Email:    admin@easternmangrove.th
-Password: Admin1234!
+Username: admin
+Password: admin1234
 Type:     admin
 Name:     System Administrator
 ```
@@ -30,14 +30,14 @@ Name:     System Administrator
 
 ### 2️⃣ Community Account (แนะนำสำหรับทดสอบ) ⭐
 ```
-Email:    user1@gmail.com
+Username: user1
 Password: User1234!
 Type:     community
 Name:     อนันต์ ธรรมชาติ
 Community: ชุมชนทดสอบ
 Status:   ✅ Approved
 ```
-**สิทธิ์:** สร้าง/แก้ไข/ลบรายงานมลพิษ, ดูข้อมูลชุมชน  
+**สิทธิ์:** สร้าง/แก้ไข/ลบรายงานมลพิษ, จัดการข้อมูลบริการทางนิเวศ, รายงานไตรมาส, รายงานแหล่งมูลพิษ  
 **พร้อมใช้งานทันที:** มี Community ที่ approved แล้ว
 
 ---
@@ -46,7 +46,7 @@ Status:   ✅ Approved
 
 #### ชุมชนบางปู
 ```
-Email:    leader1@bangpu.th
+Username: leader1
 Password: User1234!
 Type:     community
 Name:     สมชาย ใจดี
@@ -56,7 +56,7 @@ Status:   ✅ Approved
 
 #### ชุมชนแหลมผักเผา
 ```
-Email:    leader2@laemfapha.th
+Username: leader2
 Password: User1234!
 Type:     community
 Name:     สมหญิง รักษ์ป่า
@@ -66,7 +66,7 @@ Status:   ⚠️ Need setup
 
 #### ชุมชนแกลง
 ```
-Email:    leader3@klaeng.th
+Username: leader3
 Password: User1234!
 Type:     community
 Name:     วิชัย อนุรักษ์
@@ -81,13 +81,15 @@ Status:   ⚠️ Need setup
 **ใช้บัญชีนี้สำหรับการทดสอบ:**
 
 ```
-Email:    user1@gmail.com
+Username: user1
 Password: User1234!
 ```
 
 **เหตุผล:**
 - ✅ มี Community ที่ approved แล้ว
 - ✅ สร้างรายงานมลพิษได้ทันที
+- ✅ จัดการข้อมูลบริการทางนิเวศได้
+- ✅ เข้าถึงรายงานไตรมาสและรายงานแหล่งมูลพิษได้
 - ✅ ไม่ต้อง setup อะไรเพิ่ม
 - ✅ เหมาะสำหรับทดสอบฟีเจอร์ทั้งหมด
 
@@ -100,7 +102,7 @@ Password: User1234!
 curl -X POST http://localhost:3002/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "user1@gmail.com",
+    "username": "user1",
     "password": "User1234!"
   }'
 ```
@@ -114,6 +116,7 @@ curl -X POST http://localhost:3002/api/auth/login \
     "token": "eyJhbGci...",
     "user": {
       "id": 5,
+      "username": "user1",
       "email": "user1@gmail.com",
       "firstName": "อนันต์",
       "lastName": "ธรรมชาติ",
@@ -199,7 +202,7 @@ PGPASSWORD="Jobiza3499.Krit" psql -U postgres \
 
 ### เข้าสู่ระบบ
 1. เปิดแอพ Eastern Mangrove
-2. กรอก Email: **user1@gmail.com**
+2. กรอก Username: **user1**
 3. กรอก Password: **User1234!**
 4. กดปุ่ม "เข้าสู่ระบบ"
 
@@ -236,17 +239,17 @@ PGPASSWORD="Jobiza3499.Krit" psql -U postgres \
 
 ## ❗ Troubleshooting
 
-### ปัญหา: "Invalid email or password"
+### ปัญหา: "Invalid username or password"
 **แก้ไข:**
-1. ตรวจสอบว่าใช้ email และ password ถูกต้อง
+1. ตรวจสอบว่าใช้ username และ password ถูกต้อง
 2. ตรวจสอบ backend server: `curl http://localhost:3002/api/health`
-3. ลองใช้บัญชีแนะนำ: `user1@gmail.com` / `User1234!`
+3. ลองใช้บัญชีแนะนำ: `user1` / `User1234!`
 
 ---
 
 ### ปัญหา: "User has no associated community"
 **แก้ไข:**
-- เฉพาะ `user1@gmail.com` และ `leader1@bangpu.th` ที่มี approved communities
+- เฉพาะ `user1` และ `leader1` ที่มี approved communities
 - บัญชีอื่นต้องสร้าง community record ในฐานข้อมูล
 - ใช้บัญชีที่แนะนำสำหรับทดสอบ
 
@@ -296,14 +299,66 @@ cd api-server && node server.js
 
 ---
 
+## 🏪 Google Play / App Store Review Instructions
+
+### For App Store Reviewers
+
+**App Access Type:** ✅ All or some functionality in my app is restricted
+
+**Login Method:**
+- Username and password authentication
+- No 2-step verification
+- No location restrictions
+- No subscriptions or memberships required
+
+**Test Credentials (Choose One):**
+
+**Option 1: Administrator Account (Full Access)**
+```
+Username: admin
+Password: Admin1234!
+```
+- Access to all administrative functions
+- Can manage all community data
+- Can review pollution reports from all communities
+
+**Option 2: Community User (Recommended) ⭐**
+```
+Username: user1
+Password: User1234!
+```
+- Full access to community features
+- Can manage ecosystem services data
+- Can create quarterly economic/social reports
+- Can submit pollution reports
+- Pre-configured with approved community profile
+
+**Testing Instructions:**
+1. Launch the app
+2. On login screen, enter **username** and **password**
+3. Tap "เข้าสู่ระบบ" (Login) button
+4. Navigate through the main menu to test all features
+
+**Available Features:**
+- 🌳 Ecosystem Services Management
+- 📊 Quarterly Reports (Economic/Social Data)
+- 🏭 Pollution Report Submission
+- 👤 User Profile Management
+- 🔐 Password Change
+- 📍 GPS Location Services
+- 📷 Photo Upload
+
+**Note:** All test accounts are pre-configured and ready to use. No additional setup required.
+
+---
+
 ## 📝 Notes
 
-- รหัสผ่านทั้งหมดถูก reset เมื่อ March 10, 2026
-- Public users (user2, user3, research1, research2) ถูก disable แล้ว
-- ระบบไม่ใช้ user type "public" สำหรับการ login
-- มีเฉพาะ Admin และ Community users ที่สามารถ login ได้
-- การเข้าถึงแบบ public ไม่ต้อง login (view-only)
-- ใช้ `user1@gmail.com` สำหรับการทดสอบส่วนใหญ่
+- Login changed from email to **username** in version 1.0.8
+- Public users (user2, user3, research1, research2) are disabled
+- Only Admin and Community users can login
+- Public access available without login (view-only for maps and statistics)
+- Use `user1` for most comprehensive testing
 
 ---
 
@@ -322,9 +377,9 @@ cd api-server && node server.js
    ```
 
 3. **Login และทดสอบ**
-   - Email: `user1@gmail.com`
+   - Username: `user1`
    - Password: `User1234!`
-   - ไปที่หน้า "รายงานมลพิษ"
-   - ลองสร้างรายงานใหม่
+   - ไปที่หน้า "จัดการข้อมูลบริการทางนิเวศ"
+   - ลองเพิ่มข้อมูลบริการใหม่
 
 **เสร็จแล้ว!** 🎉
