@@ -1,12 +1,12 @@
-# Release Notes - Eastern Mangrove Communities App v1.0.6
+# Release Notes - Eastern Mangrove Communities App v1.0.8
 
-**Build:** 7  
+**Build:** 8  
 **Release Date:** May 10, 2026  
-**Platform:** iOS (App Store)
+**Platform:** iOS & Android
 
 ---
 
-## 📋 What's New in Version 1.0.6
+## 📋 What's New in Version 1.0.8
 
 ### ✨ New Features
 
@@ -58,7 +58,7 @@
 
 ## 🎯 Release Notes for App Store (Thai)
 
-**มีอะไรใหม่ในเวอร์ชัน 1.0.6**
+**มีอะไรใหม่ในเวอร์ชัน 1.0.8**
 
 • เปลี่ยนมาใช้ username ในการเข้าสู่ระบบแทนอีเมล ใช้งานง่ายขึ้น
 • เพิ่มฟีเจอร์เปลี่ยนรหัสผ่านในหน้าโปรไฟล์
@@ -71,7 +71,7 @@
 
 ## 🎯 Release Notes for App Store (English)
 
-**What's New in Version 1.0.6**
+**What's New in Version 1.0.8**
 
 • Login with username instead of email for easier access
 • Added password change feature in profile settings
