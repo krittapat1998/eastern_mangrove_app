@@ -21,6 +21,7 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
 
   // User Account Info
   String _username = '';
+  String _originalUserEmail = '';
   final _userEmailController = TextEditingController();
 
   // Form Controllers - Basic Info
@@ -116,7 +117,8 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
           _userData = userData;
           if (userData != null) {
             _username = userData['username'] ?? '';
-            _userEmailController.text = userData['email'] ?? '';
+            _originalUserEmail = userData['email'] ?? '';
+            _userEmailController.text = _originalUserEmail;
           }
           _populateForm(communityData);
           _isLoading = false;
@@ -200,6 +202,28 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
     });
 
     try {
+      // First, update user email if changed
+      final newEmail = _userEmailController.text.trim();
+      if (newEmail != _originalUserEmail && newEmail.isNotEmpty) {
+        final emailResponse = await _apiClient.updateUserEmail(newEmail);
+        if (!emailResponse.success) {
+          final errMsg = emailResponse.error ?? 'ไม่สามารถอัพเดทอีเมลได้';
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(errMsg),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
+      }
+
+    try {
       final updateData = {
         // Basic Info
         'name': _communityNameController.text,
@@ -235,6 +259,7 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
         'conservationStatus': _conservationStatusController.text,
       };
 
+      // Then, update community profile
       print('🔄 Updating profile with data: $updateData');
       final response = await _apiClient.updateCommunityProfile(updateData);
       print('📡 Update response: success=${response.success}, error=${response.error}');
@@ -277,74 +302,6 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
           ),
         );
       }
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _updateUserEmail() async {
-    final newEmail = _userEmailController.text.trim();
-    
-    if (newEmail.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('กรุณาระบุอีเมล'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    // Validate email format
-    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-    if (!emailRegex.hasMatch(newEmail)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('รูปแบบอีเมลไม่ถูกต้อง'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final response = await _apiClient.updateUserEmail(newEmail);
-      
-      if (response.success) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('อัพเดทอีเมลสำเร็จ'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-        await _loadProfile();
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response.error ?? 'เกิดข้อผิดพลาดในการอัพเดทอีเมล'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('เกิดข้อผิดพลาด: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
       setState(() {
         _isLoading = false;
       });
@@ -531,13 +488,12 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
                   // Email (Editable)
                   TextFormField(
                     controller: _userEmailController,
+                    enabled: _isEditing,
                     decoration: InputDecoration(
-                      labelText: 'อีเมลบัญชีผู้ใช้ (สำหรับ login)',
-                      prefixIcon: const Icon(Icons.email, color: Color(0xFF2E7D32)),
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.save, color: Color(0xFF2E7D32)),
-                        onPressed: _updateUserEmail,
-                        tooltip: 'บันทึกอีเมล',
+                      labelText: 'อีเมลบัญชีผู้ใช้',
+                      prefixIcon: Icon(
+                        Icons.email,
+                        color: _isEditing ? const Color(0xFF2E7D32) : Colors.grey,
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -546,12 +502,19 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
+                      disabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade200),
+                      ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
                       ),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: _isEditing ? Colors.white : Colors.grey.shade100,
+                    ),
+                    style: TextStyle(
+                      color: _isEditing ? Colors.black87 : Colors.grey.shade600,
                     ),
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
