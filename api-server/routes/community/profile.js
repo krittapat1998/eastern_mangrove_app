@@ -34,11 +34,11 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
     const userData = userResult.rows[0];
     console.log(`✅ Found user: ${userData.username}, email: ${userData.email}`);
     
-    console.log(`🔍 Looking for community with email: ${userData.email}`);
+    console.log(`🔍 Looking for community with user_id: ${userId}`);
     
-    // Find community associated with this user by email
-    // Note: Using email match until user_id column is added via migration
-    const result = await db.query(`
+    // Find community associated with this user by user_id (preferred) or email (fallback)
+    // Try user_id first (safer and supports changing community email)
+    let result = await db.query(`
       SELECT 
         c.id,
         c.community_name,
@@ -73,14 +73,16 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
         c.created_at,
         c.updated_at
       FROM eastern_mangrove_communities.communities c
-      WHERE c.email = $1
+      WHERE (c.user_id = $1 OR c.email = $2)
+      ORDER BY 
+        CASE WHEN c.user_id = $1 THEN 1 ELSE 2 END
       LIMIT 1
-    `, [userData.email]);
+    `, [userId, userData.email]);
 
     console.log(`📊 Found ${result.rows.length} community records`);
 
     if (result.rows.length === 0) {
-      console.log(`❌ No community found for email: ${userData.email}`);
+      console.log(`❌ No community found for user_id: ${userId} or email: ${userData.email}`);
       return res.status(404).json({
         success: false,
         message: 'ไม่พบข้อมูลชุมชนที่ลงทะเบียนแล้ว'
@@ -206,10 +208,10 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
     const sanitizedSocialMedia = normalizeArrayField(socialMedia);
     const sanitizedMangroveSpecies = normalizeArrayField(mangroveSpecies);
 
-    // Find community by email (until user_id column is added)
+    // Find community by user_id (preferred) or email (fallback)
     const communityResult = await db.query(
-      'SELECT id FROM eastern_mangrove_communities.communities WHERE email = $1 AND registration_status = $2 LIMIT 1',
-      [userEmail, 'approved']
+      'SELECT id FROM eastern_mangrove_communities.communities WHERE (user_id = $1 OR email = $2) ORDER BY CASE WHEN user_id = $1 THEN 1 ELSE 2 END LIMIT 1',
+      [userId, userEmail]
     );
 
     if (communityResult.rows.length === 0) {
