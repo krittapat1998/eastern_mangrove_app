@@ -7,13 +7,13 @@ const router = express.Router();
 // Get all pollution reports for a community
 router.get('/reports', authenticateToken, async (req, res, next) => {
   try {
-    const userEmail = req.user.email;
+    const userId = req.user.id;
     
-    // Find community ID
+    // Find community ID using user_id
     const communityResult = await db.query(`
       SELECT id FROM communities 
-      WHERE email = $1 AND registration_status = 'approved'
-    `, [userEmail]);
+      WHERE user_id = $1 AND registration_status = 'approved'
+    `, [userId]);
 
     if (communityResult.rows.length === 0) {
       return res.status(404).json({
@@ -59,7 +59,7 @@ router.get('/reports', authenticateToken, async (req, res, next) => {
 // Create pollution report
 router.post('/reports', authenticateToken, async (req, res, next) => {
   try {
-    const userEmail = req.user.email;
+    const userId = req.user.id;
     const {
       reportType,
       pollutionSource,
@@ -72,11 +72,11 @@ router.post('/reports', authenticateToken, async (req, res, next) => {
       photos
     } = req.body;
 
-    // Find community ID
+    // Find community ID using user_id
     const communityResult = await db.query(`
       SELECT id FROM communities 
-      WHERE email = $1 AND registration_status = 'approved'
-    `, [userEmail]);
+      WHERE user_id = $1 AND registration_status = 'approved'
+    `, [userId]);
 
     if (communityResult.rows.length === 0) {
       return res.status(404).json({
@@ -135,7 +135,7 @@ router.post('/reports', authenticateToken, async (req, res, next) => {
 router.put('/reports/:id', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userEmail = req.user.email;
+    const userId = req.user.id;
     const {
       reportType,
       pollutionSource = 'ไม่ระบุ',
@@ -148,12 +148,12 @@ router.put('/reports/:id', authenticateToken, async (req, res, next) => {
       photos
     } = req.body;
 
-    // Check ownership
+    // Check ownership using user_id
     const checkResult = await db.query(`
       SELECT pr.* FROM pollution_reports pr
       JOIN communities c ON pr.community_id = c.id
-      WHERE pr.id = $1 AND c.email = $2
-    `, [id, userEmail]);
+      WHERE pr.id = $1 AND c.user_id = $2
+    `, [id, userId]);
 
     if (checkResult.rows.length === 0) {
       return res.status(404).json({
@@ -221,14 +221,14 @@ router.put('/reports/:id', authenticateToken, async (req, res, next) => {
 router.delete('/reports/:id', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userEmail = req.user.email;
+    const userId = req.user.id;
 
-    // Check ownership
+    // Check ownership using user_id
     const checkResult = await db.query(`
       SELECT pr.* FROM pollution_reports pr
       JOIN communities c ON pr.community_id = c.id
-      WHERE pr.id = $1 AND c.email = $2
-    `, [id, userEmail]);
+      WHERE pr.id = $1 AND c.user_id = $2
+    `, [id, userId]);
 
     if (checkResult.rows.length === 0) {
       return res.status(404).json({

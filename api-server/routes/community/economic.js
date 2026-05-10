@@ -7,13 +7,13 @@ const router = express.Router();
 // Get all economic data for a community
 router.get('/data', authenticateToken, async (req, res, next) => {
   try {
-    const userEmail = req.user.email;
+    const userId = req.user.id;
     
-    // Find community ID from user email
+    // Find community ID using user_id
     const communityResult = await db.query(`
       SELECT id FROM communities 
-      WHERE email = $1 AND registration_status = 'approved'
-    `, [userEmail]);
+      WHERE user_id = $1 AND registration_status = 'approved'
+    `, [userId]);
 
     if (communityResult.rows.length === 0) {
       return res.status(404).json({
@@ -59,7 +59,7 @@ router.get('/data', authenticateToken, async (req, res, next) => {
 // Create economic data entry
 router.post('/data', authenticateToken, async (req, res, next) => {
   try {
-    const userEmail = req.user.email;
+    const userId = req.user.id;
     const {
       year,
       quarter,
@@ -71,11 +71,11 @@ router.post('/data', authenticateToken, async (req, res, next) => {
       notes
     } = req.body;
 
-    // Find community ID
+    // Find community ID using user_id
     const communityResult = await db.query(`
       SELECT id FROM communities 
-      WHERE email = $1 AND registration_status = 'approved'
-    `, [userEmail]);
+      WHERE user_id = $1 AND registration_status = 'approved'
+    `, [userId]);
 
     if (communityResult.rows.length === 0) {
       return res.status(404).json({
@@ -128,7 +128,7 @@ router.post('/data', authenticateToken, async (req, res, next) => {
 router.put('/data/:id', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userEmail = req.user.email;
+    const userId = req.user.id;
     const {
       year,
       quarter,
@@ -140,12 +140,12 @@ router.put('/data/:id', authenticateToken, async (req, res, next) => {
       notes
     } = req.body;
 
-    // Check ownership
+    // Check ownership using user_id
     const checkResult = await db.query(`
       SELECT ed.* FROM economic_data ed
       JOIN communities c ON ed.community_id = c.id
-      WHERE ed.id = $1 AND c.email = $2
-    `, [id, userEmail]);
+      WHERE ed.id = $1 AND c.user_id = $2
+    `, [id, userId]);
 
     if (checkResult.rows.length === 0) {
       return res.status(404).json({
@@ -196,14 +196,14 @@ router.put('/data/:id', authenticateToken, async (req, res, next) => {
 router.delete('/data/:id', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userEmail = req.user.email;
+    const userId = req.user.id;
 
-    // Check ownership
+    // Check ownership using user_id
     const checkResult = await db.query(`
       SELECT ed.* FROM economic_data ed
       JOIN communities c ON ed.community_id = c.id
-      WHERE ed.id = $1 AND c.email = $2
-    `, [id, userEmail]);
+      WHERE ed.id = $1 AND c.user_id = $2
+    `, [id, userId]);
 
     if (checkResult.rows.length === 0) {
       return res.status(404).json({

@@ -291,7 +291,7 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
     const userId = req.user.id;
 
     const result = await db.query(`
-      SELECT id, email, first_name, last_name, user_type, phone_number, 
+      SELECT id, username, email, first_name, last_name, user_type, phone_number, 
              created_at, last_login, updated_at
       FROM users 
       WHERE id = $1 AND is_active = true
@@ -312,6 +312,7 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
       data: {
         user: {
           id: user.id,
+          username: user.username,
           email: user.email,
           firstName: user.first_name,
           lastName: user.last_name,

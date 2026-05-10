@@ -459,6 +459,8 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 12),
+                                if (_profileData!['username'] != null)
+                                  _buildInfoRow(Icons.account_circle, 'ชื่อผู้ใช้', _profileData!['username']),
                                 _buildInfoRow(Icons.badge_outlined, 'ประเภทผู้ใช้', 'ผู้ดูแลระบบ'),
                                 if (_profileData!['createdAt'] != null)
                                   _buildInfoRow(
