@@ -132,17 +132,10 @@ class AuthProvider with ChangeNotifier {
     _setError(null);
 
     try {
-      // Split contactPerson into firstName and lastName
-      final nameParts = contactPerson.trim().split(' ');
-      final firstName = nameParts.first;
-      final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
-
       final request = CommunityRegistrationRequest(
         username: username,
         email: email,
         password: password,
-        firstName: firstName,
-        lastName: lastName,
         phoneNumber: phoneNumber,
         communityName: communityName,
         location: location,
