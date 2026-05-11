@@ -211,26 +211,6 @@ class ApiClient {
     }
   }
 
-  // Update user profile
-  Future<ApiResponse<Map<String, dynamic>>> updateUserProfile(Map<String, dynamic> profileData) async {
-    await _ensureTokenLoaded();
-    try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/auth/profile'),
-        headers: _headers,
-        body: json.encode(profileData),
-      );
-      final data = json.decode(response.body);
-      if (response.statusCode == 200) {
-        return ApiResponse.success(data['data'], data['message'] ?? 'Profile updated');
-      } else {
-        return ApiResponse.error(data['message'] ?? 'Failed to update profile');
-      }
-    } catch (e) {
-      return _handleError(e);
-    }
-  }
-
   // Change password
   Future<ApiResponse<bool>> changePassword(String currentPassword, String newPassword) async {
     await _ensureTokenLoaded();
