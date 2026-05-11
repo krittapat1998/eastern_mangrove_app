@@ -240,8 +240,6 @@ class CommunityRegistrationRequest {
   final String username;
   final String email;
   final String password;
-  final String firstName;
-  final String lastName;
   final String phoneNumber;
   final String communityName;
   final String location;
@@ -255,8 +253,6 @@ class CommunityRegistrationRequest {
     required this.username,
     required this.email,
     required this.password,
-    required this.firstName,
-    required this.lastName,
     required this.phoneNumber,
     required this.communityName,
     required this.location,
@@ -272,8 +268,6 @@ class CommunityRegistrationRequest {
       'username': username,
       'email': email,
       'password': password,
-      'firstName': firstName,
-      'lastName': lastName,
       'phoneNumber': phoneNumber,
       'communityName': communityName,
       'location': location,

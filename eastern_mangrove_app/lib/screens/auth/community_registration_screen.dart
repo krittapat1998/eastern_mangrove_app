@@ -723,8 +723,6 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
         username: _usernameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
-        firstName: _contactPersonController.text.trim(),
-        lastName: '', // Using contactPerson as firstName, lastName empty
         phoneNumber: _phoneController.text.trim(),
         communityName: _communityNameController.text.trim(),
         location: location,
