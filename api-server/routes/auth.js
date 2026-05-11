@@ -147,6 +147,7 @@ router.post('/login', validate(schemas.userLogin), async (req, res, next) => {
 router.post('/register-community', validate(schemas.communityRegistration), async (req, res, next) => {
   try {
     const {
+      username,
       communityName,
       location,
       contactPerson,
@@ -173,17 +174,17 @@ router.post('/register-community', validate(schemas.communityRegistration), asyn
       });
     }
 
-    // Check if an active (approved) user with this email already exists
+    // Check if an active (approved) user with this username or email already exists
     const existingUser = await db.query(
-      'SELECT email FROM users WHERE email = $1 AND is_active = true',
-      [email]
+      'SELECT username, email FROM users WHERE (username = $1 OR email = $2) AND is_active = true',
+      [username.toLowerCase(), email]
     );
 
     if (existingUser.rows.length > 0) {
       return res.status(409).json({
         success: false,
         error: 'ลงทะเบียนไม่สำเร็จ',
-        message: 'มีผู้ใช้งานที่ใช้อีเมลนี้ได้รับการอนุมัติแล้ว กรุณาใช้อีเมลอื่น'
+        message: 'มีผู้ใช้งานที่ใช้ชื่อผู้ใช้หรืออีเมลนี้ได้รับการอนุมัติแล้ว กรุณาใช้ชื่อผู้ใช้หรืออีเมลอื่น'
       });
     }
 
@@ -198,11 +199,11 @@ router.post('/register-community', validate(schemas.communityRegistration), asyn
     const oldEmails = oldCommunities.rows.map(r => r.email);
     if (!oldEmails.includes(email)) oldEmails.push(email); // always include current email
 
-    // Delete orphan users linked to any of those emails (inactive = not yet approved)
+    // Delete orphan users linked to any of those emails or username (inactive = not yet approved)
     if (oldEmails.length > 0) {
       await db.query(
-        `DELETE FROM users WHERE email = ANY($1::text[]) AND is_active = false`,
-        [oldEmails]
+        `DELETE FROM users WHERE (email = ANY($1::text[]) OR username = $2) AND is_active = false`,
+        [oldEmails, username.toLowerCase()]
       );
     }
 
@@ -223,12 +224,12 @@ router.post('/register-community', validate(schemas.communityRegistration), asyn
       // Insert new user (set is_active = false until admin approves)
       const userResult = await db.query(`
         INSERT INTO users (
-          email, password_hash, first_name, last_name, user_type, 
+          username, email, password_hash, first_name, last_name, user_type, 
           phone_number, is_active, email_verified, created_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, false, false, NOW())
-        RETURNING id, email, first_name, last_name, user_type, phone_number, created_at
-      `, [email, hashedPassword, contactPerson, communityName, 'community', phoneNumber]);
+        VALUES ($1, $2, $3, $4, $5, $6, $7, false, false, NOW())
+        RETURNING id, username, email, first_name, last_name, user_type, phone_number, created_at
+      `, [username.toLowerCase(), email, hashedPassword, contactPerson, communityName, 'community', phoneNumber]);
 
       const newUser = userResult.rows[0];
 

@@ -49,6 +49,12 @@ const schemas = {
 
   // Community registration validation
   communityRegistration: Joi.object({
+    username: Joi.string().min(3).max(50).pattern(/^[a-zA-Z0-9_]+$/).required().messages({
+      'string.min': 'Username must be at least 3 characters long',
+      'string.max': 'Username cannot exceed 50 characters',
+      'string.pattern.base': 'Username can only contain letters, numbers, and underscores',
+      'any.required': 'Username is required'
+    }),
     communityName: Joi.string().min(3).max(100).required().messages({
       'string.min': 'Community name must be at least 3 characters long',
       'string.max': 'Community name cannot exceed 100 characters',
