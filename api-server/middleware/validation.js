@@ -101,9 +101,11 @@ const schemas = {
 // Validation middleware factory
 const validate = (schema) => {
   return (req, res, next) => {
+    console.log('🔍 Validation - Request body:', JSON.stringify(req.body, null, 2));
     const { error } = schema.validate(req.body, { abortEarly: false });
     
     if (error) {
+      console.log('❌ Validation error:', error.details);
       const errors = error.details.map(detail => ({
         field: detail.path.join('.'),
         message: detail.message

@@ -69,12 +69,12 @@ router.post('/register', asyncHandler(async (req, res) => {
 // POST /api/auth/register-community
 router.post('/register-community', asyncHandler(async (req, res) => {
   const {
-    username, email, password, firstName, lastName, phoneNumber,
+    username, email, password, phoneNumber,
     communityName, location, contactPerson, description,
     establishedYear, memberCount,
   } = req.body;
 
-  if (!username || !email || !password || !firstName || !lastName || !communityName || !contactPerson) {
+  if (!username || !email || !password || !communityName || !contactPerson || !phoneNumber) {
     return res.status(400).json({ success: false, message: 'All required fields must be provided' });
   }
 
@@ -92,7 +92,7 @@ router.post('/register-community', asyncHandler(async (req, res) => {
     const userResult = await client.query(
       `INSERT INTO ${SCHEMA}.users (username, email, password_hash, first_name, last_name, user_type, phone_number, is_active, is_approved)
        VALUES ($1, $2, $3, $4, $5, 'community', $6, true, false) RETURNING *`,
-      [username.toLowerCase().trim(), email.toLowerCase().trim(), passwordHash, firstName, lastName, phoneNumber || null]
+      [username.toLowerCase().trim(), email.toLowerCase().trim(), passwordHash, contactPerson, communityName, phoneNumber || null]
     );
     const user = userResult.rows[0];
 

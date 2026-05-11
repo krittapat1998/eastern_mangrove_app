@@ -736,6 +736,7 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
       );
 
       print('📤 Sending request to API...');
+      print('📦 Request JSON: ${request.toJson()}');
       
       // Call API
       final response = await _apiClient.registerCommunity(request);
