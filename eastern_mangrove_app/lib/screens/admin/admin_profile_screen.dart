@@ -20,6 +20,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
   String? _errorMessage;
 
   // Profile controllers
+  final _usernameController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -43,6 +44,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
 
   @override
   void dispose() {
+    _usernameController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
@@ -61,6 +63,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
       final user = response.data!['user'] ?? response.data!;
       setState(() {
         _profileData = user;
+        _usernameController.text = user['username'] ?? '';
         _firstNameController.text = user['firstName'] ?? '';
         _lastNameController.text = user['lastName'] ?? '';
         _emailController.text = user['email'] ?? '';
@@ -79,12 +82,13 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
     if (!_profileFormKey.currentState!.validate()) return;
     setState(() => _isSaving = true);
 
-    final response = await _apiClient.updateUserProfile({
-      'firstName': _firstNameController.text.trim(),
-      'lastName': _lastNameController.text.trim(),
-      'email': _emailController.text.trim(),
-      'phoneNumber': _phoneController.text.trim(),
-    });
+    final response = await _apiClient.updateUserProfile(
+      username: _usernameController.text.trim(),
+      firstName: _firstNameController.text.trim(),
+      lastName: _lastNameController.text.trim(),
+      email: _emailController.text.trim(),
+      phoneNumber: _phoneController.text.trim(),
+    );
 
     if (!mounted) return;
     setState(() => _isSaving = false);
@@ -327,6 +331,23 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 16),
+                                TextFormField(
+                                  controller: _usernameController,
+                                  enabled: _isEditing,
+                                  decoration: const InputDecoration(
+                                    labelText: 'ชื่อผู้ใช้ (Username)',
+                                    prefixIcon: Icon(Icons.account_circle),
+                                    border: OutlineInputBorder(),
+                                    hintText: 'ใช้ได้เฉพาะตัวอักษร ตัวเลข และ _',
+                                  ),
+                                  validator: (v) {
+                                    if (v == null || v.trim().isEmpty) return 'กรุณากรอกชื่อผู้ใช้';
+                                    if (v.trim().length < 3) return 'ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร';
+                                    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(v.trim())) return 'ใช้ได้เฉพาะตัวอักษร ตัวเลข และ _ เท่านั้น';
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 12),
                                 TextFormField(
                                   controller: _firstNameController,
                                   enabled: _isEditing,
