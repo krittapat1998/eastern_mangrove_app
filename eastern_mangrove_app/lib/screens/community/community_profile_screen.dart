@@ -20,7 +20,7 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
   Map<String, dynamic>? _userData;
 
   // User Account Info
-  String _username = '';
+  final _usernameController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -69,6 +69,7 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
   @override
   void dispose() {
     // User Account
+    _usernameController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     // Basic Info
@@ -117,7 +118,7 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
           _profileData = communityData;
           _userData = userData;
           if (userData != null) {
-            _username = userData['username'] ?? '';
+            _usernameController.text = userData['username'] ?? '';
           }
           _populateForm(communityData);
           _isLoading = false;
@@ -201,7 +202,61 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
     });
 
     try {
-      // First, update password if provided
+      // First, update username if changed
+      final newUsername = _usernameController.text.trim();
+      final originalUsername = _userData?['username'] ?? '';
+      
+      if (newUsername.isNotEmpty && newUsername != originalUsername) {
+        // Validate username format
+        if (newUsername.length < 3) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
+        
+        if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(newUsername)) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('ชื่อผู้ใช้สามารถใช้ได้เฉพาะตัวอักษร ตัวเลข และ _ เท่านั้น'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
+        
+        final usernameResponse = await _apiClient.updateUserProfile(username: newUsername);
+        if (!usernameResponse.success) {
+          final errMsg = usernameResponse.error ?? 'ไม่สามารถอัพเดทชื่อผู้ใช้ได้';
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(errMsg),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
+      }
+      
+      // Then, update password if provided
       final newPassword = _newPasswordController.text.trim();
       final confirmPassword = _confirmPasswordController.text.trim();
       
@@ -482,43 +537,81 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
                   // Section 0: Account Information
                   _buildSectionTitle('ข้อมูลบัญชี', Icons.account_circle),
                   const SizedBox(height: 16),
-                  // Username (Read-only)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.person, color: Colors.grey.shade600),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'ชื่อผู้ใช้ (Username)',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade600,
+                  // Username (Editable)
+                  if (!_isEditing)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.person, color: Colors.grey.shade600),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'ชื่อผู้ใช้ (Username)',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _username.isNotEmpty ? _username : '-',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                const SizedBox(height: 4),
+                                Text(
+                                  _usernameController.text.isNotEmpty ? _usernameController.text : '-',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+                        ],
+                      ),
+                    )
+                  else
+                    TextFormField(
+                      controller: _usernameController,
+                      decoration: InputDecoration(
+                        labelText: 'ชื่อผู้ใช้ (Username)',
+                        hintText: 'ใช้ได้เฉพาะตัวอักษร ตัวเลข และ _',
+                        prefixIcon: const Icon(
+                          Icons.person,
+                          color: Color(0xFF2E7D32),
                         ),
-                      ],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'กรุณากรอกชื่อผู้ใช้';
+                        }
+                        if (value.trim().length < 3) {
+                          return 'ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร';
+                        }
+                        if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value.trim())) {
+                          return 'ใช้ได้เฉพาะตัวอักษร ตัวเลข และ _ เท่านั้น';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
                   const SizedBox(height: 16),
                   // Change Password Section
                   if (_isEditing) ...[

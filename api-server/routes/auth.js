@@ -335,9 +335,9 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
 router.put('/profile', authenticateToken, async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const { firstName, lastName, phoneNumber, email } = req.body;
+    const { username, firstName, lastName, phoneNumber, email } = req.body;
 
-    if (!firstName && !lastName && !phoneNumber && !email) {
+    if (!username && !firstName && !lastName && !phoneNumber && !email) {
       return res.status(400).json({ success: false, message: 'ไม่มีข้อมูลที่ต้องการอัปเดต' });
     }
 
@@ -346,6 +346,15 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
     const values = [];
     let idx = 1;
 
+    if (username !== undefined) {
+      // Check username not taken by someone else
+      const usernameCheck = await db.query('SELECT id FROM users WHERE username = $1 AND id != $2', [username.toLowerCase(), userId]);
+      if (usernameCheck.rows.length > 0) {
+        return res.status(400).json({ success: false, message: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้ว' });
+      }
+      fields.push(`username = $${idx++}`);
+      values.push(username.toLowerCase());
+    }
     if (firstName !== undefined) { fields.push(`first_name = $${idx++}`); values.push(firstName); }
     if (lastName !== undefined)  { fields.push(`last_name = $${idx++}`);  values.push(lastName); }
     if (phoneNumber !== undefined){ fields.push(`phone_number = $${idx++}`);values.push(phoneNumber); }
@@ -363,7 +372,7 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
     values.push(userId);
 
     const result = await db.query(
-      `UPDATE users SET ${fields.join(', ')} WHERE id = $${idx} RETURNING id, email, first_name, last_name, phone_number, user_type`,
+      `UPDATE users SET ${fields.join(', ')} WHERE id = $${idx} RETURNING id, username, email, first_name, last_name, phone_number, user_type`,
       values
     );
 
@@ -374,6 +383,7 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
       data: {
         user: {
           id: u.id,
+          username: u.username,
           email: u.email,
           firstName: u.first_name,
           lastName: u.last_name,

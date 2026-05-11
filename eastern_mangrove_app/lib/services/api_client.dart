@@ -391,6 +391,40 @@ class ApiClient {
     }
   }
 
+  Future<ApiResponse<Map<String, dynamic>>> updateUserProfile({
+    String? username,
+    String? firstName,
+    String? lastName,
+    String? phoneNumber,
+    String? email,
+  }) async {
+    await _ensureTokenLoaded();
+    try {
+      final body = <String, dynamic>{};
+      if (username != null) body['username'] = username;
+      if (firstName != null) body['firstName'] = firstName;
+      if (lastName != null) body['lastName'] = lastName;
+      if (phoneNumber != null) body['phoneNumber'] = phoneNumber;
+      if (email != null) body['email'] = email;
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/auth/profile'),
+        headers: _headers,
+        body: json.encode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return ApiResponse.success(data['data'], data['message'] ?? 'Profile updated successfully');
+      } else {
+        final data = json.decode(response.body);
+        return ApiResponse.error(data['message'] ?? 'Failed to update profile');
+      }
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
   Future<ApiResponse<Map<String, dynamic>>> updateCommunityProfile(Map<String, dynamic> profileData) async {
     await _ensureTokenLoaded();
     try {
