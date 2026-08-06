@@ -58,6 +58,20 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
   final _mangroveSpeciesController = TextEditingController();
   final _conservationStatusController = TextEditingController();
 
+  // Thai Buddhist Era is Gregorian year + 543. The backend stores/validates
+  // established_year as a Gregorian year, but the field is shown to users in พ.ศ.
+  static const int _beOffset = 543;
+
+  String _adYearToBeText(dynamic adYear) {
+    final year = adYear is int ? adYear : int.tryParse(adYear?.toString() ?? '');
+    return year == null ? '' : (year + _beOffset).toString();
+  }
+
+  int? _beTextToAdYear(String text) {
+    final beYear = int.tryParse(text.trim());
+    return beYear == null ? null : beYear - _beOffset;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -178,7 +192,7 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
     _socialMediaController.text = safeString(data['socialMedia']);
     
     // Community
-    _establishedYearController.text = data['establishedYear']?.toString() ?? '';
+    _establishedYearController.text = _adYearToBeText(data['establishedYear']);
     _memberCountController.text = data['memberCount']?.toString() ?? '';
     _totalPopulationController.text = data['totalPopulation']?.toString() ?? '';
     _resourceDependentPopulationController.text = data['resourceDependentPopulation']?.toString() ?? '';
@@ -335,7 +349,7 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
         'socialMedia': _socialMediaController.text,
         
         // Community
-        'establishedYear': int.tryParse(_establishedYearController.text),
+        'establishedYear': _beTextToAdYear(_establishedYearController.text),
         'memberCount': int.tryParse(_memberCountController.text),
         'totalPopulation': int.tryParse(_totalPopulationController.text),
         'resourceDependentPopulation': int.tryParse(_resourceDependentPopulationController.text),
@@ -849,6 +863,15 @@ class _CommunityProfileScreenState extends State<CommunityProfileScreen> {
                           icon: Icons.calendar_today,
                           enabled: _isEditing,
                           keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) return null;
+                            final adYear = _beTextToAdYear(value);
+                            final currentAdYear = DateTime.now().year;
+                            if (adYear == null || adYear < 1900 || adYear > currentAdYear) {
+                              return 'กรุณากรอกปี พ.ศ. ให้ถูกต้อง (${1900 + _beOffset}-${currentAdYear + _beOffset})';
+                            }
+                            return null;
+                          },
                         ),
                       ),
                       const SizedBox(width: 16),
