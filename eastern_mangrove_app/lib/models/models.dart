@@ -316,7 +316,7 @@ class ApiResponse<T> {
   factory ApiResponse.error(String error) {
     return ApiResponse(
       success: false,
-      message: '',
+      message: error,
       error: error,
     );
   }

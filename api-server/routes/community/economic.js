@@ -8,12 +8,14 @@ const router = express.Router();
 router.get('/data', authenticateToken, async (req, res, next) => {
   try {
     const userId = req.user.id;
-    
-    // Find community ID using user_id
+    const userEmail = req.user.email;
+
+    // Find community ID using user_id (preferred) or email (fallback)
     const communityResult = await db.query(`
-      SELECT id FROM communities 
-      WHERE user_id = $1 AND registration_status = 'approved'
-    `, [userId]);
+      SELECT id FROM communities
+      WHERE (user_id = $1 OR email = $2) AND registration_status = 'approved'
+      ORDER BY CASE WHEN user_id = $1 THEN 1 ELSE 2 END LIMIT 1
+    `, [userId, userEmail]);
 
     if (communityResult.rows.length === 0) {
       return res.status(404).json({
@@ -60,6 +62,7 @@ router.get('/data', authenticateToken, async (req, res, next) => {
 router.post('/data', authenticateToken, async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const userEmail = req.user.email;
     const {
       year,
       quarter,
@@ -71,11 +74,12 @@ router.post('/data', authenticateToken, async (req, res, next) => {
       notes
     } = req.body;
 
-    // Find community ID using user_id
+    // Find community ID using user_id (preferred) or email (fallback)
     const communityResult = await db.query(`
-      SELECT id FROM communities 
-      WHERE user_id = $1 AND registration_status = 'approved'
-    `, [userId]);
+      SELECT id FROM communities
+      WHERE (user_id = $1 OR email = $2) AND registration_status = 'approved'
+      ORDER BY CASE WHEN user_id = $1 THEN 1 ELSE 2 END LIMIT 1
+    `, [userId, userEmail]);
 
     if (communityResult.rows.length === 0) {
       return res.status(404).json({
@@ -129,6 +133,7 @@ router.put('/data/:id', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
+    const userEmail = req.user.email;
     const {
       year,
       quarter,
@@ -140,12 +145,12 @@ router.put('/data/:id', authenticateToken, async (req, res, next) => {
       notes
     } = req.body;
 
-    // Check ownership using user_id
+    // Check ownership using user_id (preferred) or email (fallback)
     const checkResult = await db.query(`
       SELECT ed.* FROM economic_data ed
       JOIN communities c ON ed.community_id = c.id
-      WHERE ed.id = $1 AND c.user_id = $2
-    `, [id, userId]);
+      WHERE ed.id = $1 AND (c.user_id = $2 OR c.email = $3)
+    `, [id, userId, userEmail]);
 
     if (checkResult.rows.length === 0) {
       return res.status(404).json({
@@ -197,13 +202,14 @@ router.delete('/data/:id', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
+    const userEmail = req.user.email;
 
-    // Check ownership using user_id
+    // Check ownership using user_id (preferred) or email (fallback)
     const checkResult = await db.query(`
       SELECT ed.* FROM economic_data ed
       JOIN communities c ON ed.community_id = c.id
-      WHERE ed.id = $1 AND c.user_id = $2
-    `, [id, userId]);
+      WHERE ed.id = $1 AND (c.user_id = $2 OR c.email = $3)
+    `, [id, userId, userEmail]);
 
     if (checkResult.rows.length === 0) {
       return res.status(404).json({
