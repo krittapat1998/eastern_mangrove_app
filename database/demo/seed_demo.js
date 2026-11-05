@@ -199,6 +199,18 @@ const POLLUTION = [
          ['resolved', 'closed'].includes(status) ? 'ดำเนินการแก้ไขและตรวจสอบเรียบร้อยแล้ว' : null]);
     }
 
+    // optional new fields (need migration_add_area_contact_and_pollution_impact.sql); skipped if columns are missing
+    const hasNew = (await c.query(`SELECT count(*) n FROM information_schema.columns WHERE table_schema='eastern_mangrove_communities' AND
+      ((table_name='pollution_reports' AND column_name='expected_impact') OR (table_name='mangrove_areas' AND column_name IN ('contact_person','contact_channel')))`)).rows[0].n == 3;
+    if (hasNew) {
+      await c.query(`UPDATE pollution_reports SET expected_impact = CASE report_type
+        WHEN 'Water Pollution' THEN 'น้ำเสียอาจทำให้สัตว์น้ำตายและรากโกงกางเน่า'
+        WHEN 'Air Pollution' THEN 'ควันอาจกระทบสุขภาพชาวบ้านและใบโกงกาง'
+        WHEN 'Industrial Waste' THEN 'สารปนเปื้อนสะสมในดินเลน กระทบแหล่งอนุบาลสัตว์น้ำ'
+        ELSE 'ขยะพันรากไม้ ทำให้ต้นอ่อนโตช้าและน้ำไหลเวียนไม่สะดวก' END`);
+      await c.query(`UPDATE mangrove_areas SET contact_person = 'ผู้ประสานงานตัวอย่าง ' || id, contact_channel = 'LINE: demo_area_' || id`);
+    }
+
     await c.query('COMMIT');
     const counts = await c.query(`SELECT
       (SELECT count(*) FROM users) users, (SELECT count(*) FROM communities) communities, (SELECT count(*) FROM mangrove_areas) areas,

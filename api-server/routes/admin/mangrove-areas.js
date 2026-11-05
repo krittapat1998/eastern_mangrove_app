@@ -115,7 +115,9 @@ router.post('/mangrove-areas', async (req, res) => {
       established_year,
       managing_organization,
       threats,
-      conservation_activities
+      conservation_activities,
+      contact_person,
+      contact_channel
     } = req.body;
     
     // Validation
@@ -141,8 +143,10 @@ router.post('/mangrove-areas', async (req, res) => {
         established_year,
         managing_organization,
         threats,
-        conservation_activities
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        conservation_activities,
+        contact_person,
+        contact_channel
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       RETURNING *
     `, [
       community_id || null,
@@ -158,7 +162,9 @@ router.post('/mangrove-areas', async (req, res) => {
       established_year || null,
       managing_organization || null,
       stringToArray(threats),
-      stringToArray(conservation_activities)
+      stringToArray(conservation_activities),
+      contact_person || null,
+      contact_channel || null
     ]);
     
     res.status(201).json({
@@ -195,7 +201,9 @@ router.put('/mangrove-areas/:id', async (req, res) => {
       established_year,
       managing_organization,
       threats,
-      conservation_activities
+      conservation_activities,
+      contact_person,
+      contact_channel
     } = req.body;
     
     // Check if area exists
@@ -233,6 +241,8 @@ router.put('/mangrove-areas/:id', async (req, res) => {
         managing_organization = $13,
         threats = $14,
         conservation_activities = $15,
+        contact_person = $16,
+        contact_channel = $17,
         updated_at = NOW()
       WHERE id = $1
       RETURNING *
@@ -251,7 +261,9 @@ router.put('/mangrove-areas/:id', async (req, res) => {
       established_year || null,
       managing_organization || null,
       stringToArray(threats),
-      stringToArray(conservation_activities)
+      stringToArray(conservation_activities),
+      contact_person || null,
+      contact_channel || null
     ]);
     
     res.json({

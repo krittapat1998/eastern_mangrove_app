@@ -47,6 +47,14 @@ const call = async (method, path, token, body) => {
   ok('create pollution report', (pr.s === 201 || pr.s === 200) && !!rid, JSON.stringify(pr.j)?.slice(0, 200));
   const pu = await call('PUT', `/pollution/reports/${rid}`, T1, { reportType: 'Water Pollution', pollutionSource: 'api test', severityLevel: 'medium', description: 'api test report edited', latitude: 12.52, longitude: 102.08, status: 'investigating' });
   ok('update pollution report', pu.s === 200, JSON.stringify(pu.j)?.slice(0, 200));
+  const pi = await call('POST', '/pollution/reports', T1, { reportType: 'Water Pollution', pollutionSource: 'impact test', severityLevel: 'low', description: 'impact', expectedImpact: 'ปลาตาย รากโกงกางเน่า', latitude: 12.52, longitude: 102.08 });
+  const piId = pi.j?.data?.id;
+  ok('pollution report stores expected impact', pi.j?.data?.expected_impact === 'ปลาตาย รากโกงกางเน่า', JSON.stringify(pi.j)?.slice(0, 200));
+  const pl = await call('GET', '/pollution/reports', T1);
+  ok('list returns expected_impact', (pl.j?.data || []).some(r => r.id === piId && r.expected_impact === 'ปลาตาย รากโกงกางเน่า'));
+  const pu2 = await call('PUT', `/pollution/reports/${piId}`, T1, { reportType: 'Water Pollution', pollutionSource: 'impact test', severityLevel: 'low', description: 'impact', expectedImpact: 'แก้ไขแล้ว', latitude: 12.52, longitude: 102.08, status: 'pending' });
+  ok('update changes expected impact', pu2.j?.data?.expected_impact === 'แก้ไขแล้ว', JSON.stringify(pu2.j)?.slice(0, 200));
+  await call('DELETE', `/pollution/reports/${piId}`, T1);
   ok('other community cannot delete my report', [403, 404].includes((await call('DELETE', `/pollution/reports/${rid}`, T2)).s));
   ok('delete pollution report', (await call('DELETE', `/pollution/reports/${rid}`, T1)).s === 200);
   const badRep = await call('POST', '/pollution/reports', T1, { reportType: 'Alien Pollution', pollutionSource: 'x', severityLevel: 'low', description: 'x' });
@@ -65,6 +73,13 @@ const call = async (method, path, token, body) => {
   // --- admin: areas CRUD
   const ar = await call('POST', '/admin/mangrove-areas', TA, { area_name: 'พื้นที่ทดสอบ API', location: 'ต.ทดสอบ', province: 'ตราด', size_hectares: 12.5, conservation_status: 'good', latitude: 12.2, longitude: 102.4, mangrove_species: ['แสมขาว'] });
   const aid = ar.j?.data?.id || ar.j?.data?.area?.id;
+  const ac = await call('POST', '/admin/mangrove-areas', TA, { area_name: 'พื้นที่ติดต่อ', location: 'ต.ทดสอบ', province: 'ตราด', size_hectares: 1, contact_person: 'ผู้ติดต่อทดสอบ', contact_channel: 'LINE test_id' });
+  ok('admin area stores contact person/channel', ac.j?.data?.contact_person === 'ผู้ติดต่อทดสอบ' && ac.j?.data?.contact_channel === 'LINE test_id', JSON.stringify(ac.j)?.slice(0, 200));
+  const al = await call('GET', '/admin/mangrove-areas', TA);
+  ok('admin list returns contact', (al.j?.data || []).some(a => a.contact_channel === 'LINE test_id'));
+  const pubC = await call('GET', '/public/areas');
+  ok('public API does NOT expose area contact', !JSON.stringify(pubC.j).includes('LINE test_id') && !JSON.stringify(pubC.j).includes('ผู้ติดต่อทดสอบ'));
+  if (ac.j?.data?.id) await call('DELETE', `/admin/mangrove-areas/${ac.j.data.id}`, TA);
   ok('admin create area', (ar.s === 201 || ar.s === 200) && !!aid, JSON.stringify(ar.j)?.slice(0, 200));
   const pubAreas = await call('GET', '/public/areas');
   ok('new area visible on public endpoint', JSON.stringify(pubAreas.j).includes('พื้นที่ทดสอบ API'));

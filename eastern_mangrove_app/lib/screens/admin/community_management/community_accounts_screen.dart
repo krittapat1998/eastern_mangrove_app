@@ -770,7 +770,7 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
               _buildDetailRow('เบอร์โทร', community['phone_number']),
               _buildDetailRow('อีเมล', community['email']),
               _buildDetailRow('คำอธิบาย', community['description']),
-              _buildDetailRow('ปีที่ก่อตั้ง', community['established_year']?.toString()),
+              _buildDetailRow('ปีที่ก่อตั้ง (พ.ศ.)', community['established_year'] == null ? null : ThaiDate.yearText(community['established_year'])),
               _buildDetailRow('จำนวนสมาชิก', community['member_count']?.toString()),
               _buildDetailRow('สถานะการลงทะเบียน', _getStatusText(community['registration_status'] ?? '')),
               _buildDetailRow('สถานะการใช้งาน', community['user_active'] == true ? 'ใช้งาน' : 'ระงับการใช้งาน'),
@@ -1264,7 +1264,7 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
                     emailController.text,
                     passwordController.text,
                     descriptionController.text.isEmpty ? null : descriptionController.text,
-                    establishedYearController.text.isEmpty ? null : int.tryParse(establishedYearController.text),
+                    establishedYearController.text.isEmpty ? null : ThaiDate.yearFromInput(establishedYearController.text),
                     memberCountController.text.isEmpty ? null : int.tryParse(memberCountController.text),
                   );
                 } catch (e) {
@@ -1436,7 +1436,7 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
     final emailController = TextEditingController(text: community['email']);
     final descriptionController = TextEditingController(text: community['description'] ?? '');
     final establishedYearController = TextEditingController(
-      text: community['established_year']?.toString() ?? '',
+      text: ThaiDate.yearText(community['established_year']),
     );
     final memberCountController = TextEditingController(
       text: community['member_count']?.toString() ?? '',
@@ -1690,7 +1690,7 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
                     phoneController.text,
                     emailController.text,
                     descriptionController.text.isEmpty ? null : descriptionController.text,
-                    establishedYearController.text.isEmpty ? null : int.tryParse(establishedYearController.text),
+                    establishedYearController.text.isEmpty ? null : ThaiDate.yearFromInput(establishedYearController.text),
                     memberCountController.text.isEmpty ? null : int.tryParse(memberCountController.text),
                   );
                 }

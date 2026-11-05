@@ -1,3 +1,4 @@
+import 'package:eastern_mangrove_app/utils/thai_date.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'area_card.dart' show getMangroveStatusColor;
@@ -113,10 +114,17 @@ void showMangroveAreaDetailsDialog(
               ),
             if (area['established_year'] != null)
               buildMangroveDetailRow(
-                  'ปีที่ก่อตั้ง', area['established_year'].toString()),
+                  'ปีที่ก่อตั้ง (พ.ศ.)', ThaiDate.yearText(area['established_year'])),
             if (area['managing_organization'] != null)
               buildMangroveDetailRow(
                   'องค์กรดูแล', area['managing_organization']),
+            if (area['contact_person'] != null &&
+                area['contact_person'].toString().isNotEmpty)
+              buildMangroveDetailRow('ผู้ติดต่อ', area['contact_person'].toString()),
+            if (area['contact_channel'] != null &&
+                area['contact_channel'].toString().isNotEmpty)
+              buildMangroveDetailRow(
+                  'ช่องทางติดต่อ', area['contact_channel'].toString()),
             if (area['description'] != null &&
                 area['description'].toString().isNotEmpty) ...[
               const SizedBox(height: 16),

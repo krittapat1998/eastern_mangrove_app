@@ -1,5 +1,7 @@
+import 'package:eastern_mangrove_app/utils/coordinates.dart';
 import 'package:eastern_mangrove_app/utils/thai_date.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
@@ -600,6 +602,15 @@ class _PollutionReportsNewScreenState extends State<PollutionReportsNewScreen>
                 const SizedBox(height: 4),
                 Text(report['pollution_source']),
               ],
+              if (report['expected_impact'] != null && report['expected_impact'].toString().isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Text(
+                  'น่าจะส่งผลอย่างไร:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(report['expected_impact']),
+              ],
               if (report['latitude'] != null && report['longitude'] != null) ...[
                 const SizedBox(height: 16),
                 _buildDetailRow('ตำแหน่ง', '${report['latitude']}, ${report['longitude']}'),
@@ -689,6 +700,9 @@ class _PollutionReportsNewScreenState extends State<PollutionReportsNewScreen>
     final sourceController = TextEditingController(
       text: existingReport?['pollution_source'] ?? '',
     );
+    final impactController = TextEditingController(
+      text: existingReport?['expected_impact'] ?? '',
+    );
 
     showDialog(
       context: context,
@@ -771,6 +785,17 @@ class _PollutionReportsNewScreenState extends State<PollutionReportsNewScreen>
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.source),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: impactController,
+                    decoration: const InputDecoration(
+                      labelText: 'น่าจะส่งผลอย่างไรต่อป่าชายเลน',
+                      hintText: 'เช่น ปลาตาย รากโกงกางเน่า น้ำเสีย กลิ่นเหม็น',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.nature),
+                    ),
+                    maxLines: 3,
                   ),
                   const SizedBox(height: 16),
                   
@@ -901,6 +926,52 @@ class _PollutionReportsNewScreenState extends State<PollutionReportsNewScreen>
                       ),
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  // Pick the point in Google Maps (long-press -> copy coordinates), then paste here
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _openGoogleMapsToPick(selectedLat, selectedLon),
+                          icon: const Icon(Icons.map, size: 18),
+                          label: const Text('เปิด Google Maps', style: TextStyle(fontSize: 13)),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            foregroundColor: Colors.green.shade800,
+                            side: BorderSide(color: Colors.green.shade400),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final pasted = await _pasteCoordinatesFromClipboard();
+                            if (pasted != null) {
+                              setDialogState(() {
+                                selectedLat = pasted['lat'];
+                                selectedLon = pasted['lon'];
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.content_paste, size: 18),
+                          label: const Text('วางพิกัดที่คัดลอก', style: TextStyle(fontSize: 13)),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            foregroundColor: Colors.green.shade800,
+                            side: BorderSide(color: Colors.green.shade400),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: Text(
+                      'ใน Google Maps แตะค้างที่จุดมลพิษ แล้วแตะตัวเลขพิกัดเพื่อคัดลอก กลับมาที่แอปแล้วกด "วางพิกัดที่คัดลอก"',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -946,6 +1017,7 @@ class _PollutionReportsNewScreenState extends State<PollutionReportsNewScreen>
                   'pollutionSource': sourceController.text.trim().isNotEmpty 
                       ? sourceController.text.trim() 
                       : 'ไม่ระบุ',
+                  'expectedImpact': impactController.text.trim(),
                   'latitude': selectedLat,
                   'longitude': selectedLon,
                   'reportDate': DateTime.now().toIso8601String(),
@@ -1032,6 +1104,42 @@ class _PollutionReportsNewScreenState extends State<PollutionReportsNewScreen>
   }
 
   // Get current GPS location
+  /// Opens Google Maps (app or web) so the user can find the point, long-press it and copy the coordinates.
+  Future<void> _openGoogleMapsToPick(double? lat, double? lon) async {
+    // Default view: Eastern region coast when no point is selected yet
+    final q = (lat != null && lon != null) ? '$lat,$lon' : '12.6,101.9';
+    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$q');
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok) throw 'launch failed';
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ไม่สามารถเปิด Google Maps ได้'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<Map<String, double>?> _pasteCoordinatesFromClipboard() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final parsed = parseCoordinates(data?.text ?? '');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(parsed != null
+              ? 'ได้รับพิกัดจาก Google Maps แล้ว'
+              : 'ไม่พบพิกัดในสิ่งที่คัดลอกไว้ (ต้องเป็นพิกัดในประเทศไทย เช่น 12.5236, 102.0801)'),
+          backgroundColor: parsed != null ? Colors.green : Colors.orange,
+        ),
+      );
+    }
+    return parsed;
+  }
+
   Future<Map<String, double>?> _getCurrentLocation() async {
     try {
       final hasPermission = await _requestLocationPermission();
@@ -1701,6 +1809,10 @@ class _PollutionReportsNewScreenState extends State<PollutionReportsNewScreen>
                 _buildInfoRow('แหล่งมลพิษ', report['pollution_source'] ?? '-'),
                 const SizedBox(height: 8),
                 _buildInfoRow('รายละเอียด', report['description'] ?? '-'),
+                if (report['expected_impact'] != null && report['expected_impact'].toString().isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _buildInfoRow('ผลกระทบ', report['expected_impact'].toString()),
+                ],
                 const SizedBox(height: 8),
                 _buildInfoRow('พิกัด', '${report['latitude']}, ${report['longitude']}'),
                 if (report['report_date'] != null) ...[

@@ -34,6 +34,7 @@ router.get('/reports', authenticateToken, async (req, res, next) => {
         pollution_source,
         severity_level,
         description,
+        expected_impact,
         latitude,
         longitude,
         report_date,
@@ -68,6 +69,7 @@ router.post('/reports', authenticateToken, async (req, res, next) => {
       pollutionSource,
       severityLevel,
       description,
+      expectedImpact,
       latitude,
       longitude,
       reportDate,
@@ -103,12 +105,13 @@ router.post('/reports', authenticateToken, async (req, res, next) => {
         pollution_source,
         severity_level,
         description,
+        expected_impact,
         latitude,
         longitude,
         report_date,
         status,
         photos
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *
     `, [
       communityId,
@@ -116,6 +119,7 @@ router.post('/reports', authenticateToken, async (req, res, next) => {
       pollutionSource,
       severityLevel || 'medium',
       description,
+      expectedImpact ? String(expectedImpact).trim() || null : null,
       latitude || null,
       longitude || null,
       reportDate || new Date(),
@@ -146,6 +150,7 @@ router.put('/reports/:id', authenticateToken, async (req, res, next) => {
       pollutionSource = 'ไม่ระบุ',
       severityLevel,
       description,
+      expectedImpact,
       latitude,
       longitude,
       reportDate = new Date().toISOString(),
@@ -189,19 +194,21 @@ router.put('/reports/:id', authenticateToken, async (req, res, next) => {
         pollution_source = $2,
         severity_level = $3,
         description = $4,
-        latitude = $5,
-        longitude = $6,
-        report_date = $7,
-        status = $8,
-        photos = $9,
+        expected_impact = $5,
+        latitude = $6,
+        longitude = $7,
+        report_date = $8,
+        status = $9,
+        photos = $10,
         updated_at = NOW()
-      WHERE id = $10
+      WHERE id = $11
       RETURNING *
     `, [
       dbReportType,
       pollutionSource,
       severityLevel,
       description,
+      expectedImpact ? String(expectedImpact).trim() || null : null,
       latitude || null,
       longitude || null,
       reportDate,

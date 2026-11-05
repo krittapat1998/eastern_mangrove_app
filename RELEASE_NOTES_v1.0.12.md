@@ -13,6 +13,7 @@
 ✨ แสดงปีเป็น พ.ศ. และพื้นที่เป็นไร่ทุกหน้า ตรงกันทั้งแอป
 🔧 แก้ไขหน้าข้อมูลชุมชนที่ค้างเมื่อมีข้อมูลอาชีพที่ไม่ตรงตัวเลือก
 🔧 ปรับปรุงหน้าลงทะเบียนชุมชน เก็บที่อยู่ครบ และข้อความแจ้งเตือนชัดเจนขึ้น
+📝 รายงานมลพิษเพิ่มช่อง "น่าจะส่งผลอย่างไร" และระบุพิกัดผ่าน Google Maps ได้
 📍 ขอใช้ตำแหน่งเฉพาะตอนเปิดแผนที่ ไม่ขอทันทีที่เปิดแอป
 ```
 
@@ -21,6 +22,9 @@
 เวอร์ชัน 1.0.12
 
 ✨ ปรับปรุง
+• รายงานมลพิษ: เพิ่มช่อง "น่าจะส่งผลอย่างไรต่อป่าชายเลน"
+• ระบุพิกัดมลพิษจาก Google Maps (เปิด Google Maps แล้ววางพิกัดที่คัดลอก)
+• ผู้ดูแลระบบบันทึกผู้ติดต่อและช่องทางติดต่อของแต่ละพื้นที่ป่า (เห็นเฉพาะผู้ดูแลระบบ)
 • แสดงปีเป็น พ.ศ. ทุกหน้า (รายงานไตรมาส บริการนิเวศ รายงานมลพิษ หน้าอนุมัติ)
 • แสดงและกรอกขนาดพื้นที่เป็น "ไร่" ทุกหน้า และแปลงหน่วยให้ถูกต้อง
 • หน้าสถิติของผู้ใช้ทั่วไปแสดงจำนวนพื้นที่ ชุมชน และมูลค่าได้ถูกต้อง
@@ -46,6 +50,7 @@ Version 1.0.12
 ✨ Years shown in Buddhist Era and areas in rai consistently across the app
 🔧 Fixed a crash on the community info page for unusual saved occupation values
 🔧 Better community registration: full address saved, clearer error messages
+📝 Pollution reports have an "expected impact" field; pick coordinates via Google Maps
 📍 Location is requested only when you open the map, not at launch
 ```
 
@@ -54,6 +59,9 @@ Version 1.0.12
 Version 1.0.12
 
 ✨ Improvements
+• Pollution reports: new "expected impact on the mangrove" field
+• Pick pollution coordinates from Google Maps (open Google Maps, then paste the copied coordinates)
+• Admins can record a contact person and contact channel per mangrove area (admin-only)
 • Years are shown in Buddhist Era (B.E.) on every screen
 • Area sizes are shown and entered in rai everywhere, with correct unit conversion
 • Public statistics card now shows the correct number of areas, communities and value
@@ -89,8 +97,9 @@ Location is requested only when opening the map tab (to show the user's position
 ## 📋 รายละเอียดการเปลี่ยนแปลงทั้งหมด
 
 ### ✨ การปรับปรุง
+0. **ตามเอกสารขอบเขตงาน:** ช่อง "น่าจะส่งผลอย่างไร" ในรายงานมลพิษ, ระบุพิกัดผ่าน Google Maps (ปุ่ม "เปิด Google Maps" + "วางพิกัดที่คัดลอก" ใน [`coordinates.dart`](eastern_mangrove_app/lib/utils/coordinates.dart) ตรวจว่าเป็นพิกัดในประเทศไทย และสลับ lat/lng ให้ถ้ากลับด้าน), ผู้ติดต่อ/ช่องทางติดต่อของพื้นที่ป่า (เฉพาะ Admin)
 1. **หน่วยพื้นที่ถูกต้อง (ไร่ ↔ เฮกตาร์)** — ฐานข้อมูลเก็บเป็นเฮกตาร์ แอปแสดง/รับเป็นไร่ (1 เฮกตาร์ = 6.25 ไร่) แปลงที่ชั้น `ApiClient` (`AreaUnit`) ที่เดียว
-2. **ปี พ.ศ. ทุกหน้า** — เพิ่ม [`thai_date.dart`](eastern_mangrove_app/lib/utils/thai_date.dart) ฐานข้อมูลยังเก็บ ค.ศ. ช่องกรอกปีเป็น พ.ศ. (ถ้าพิมพ์ 2026 ก็ยังบันทึกถูก)
+2. **ปี พ.ศ. ทุกหน้า** (รวมหน้าสร้าง/แก้ไขชุมชนของ Admin และปีที่ก่อตั้งพื้นที่ป่า ที่เดิมลงปี ค.ศ. ทั้งที่ป้ายเขียน พ.ศ.) — เพิ่ม [`thai_date.dart`](eastern_mangrove_app/lib/utils/thai_date.dart) ฐานข้อมูลยังเก็บ ค.ศ. ช่องกรอกปีเป็น พ.ศ. (ถ้าพิมพ์ 2026 ก็ยังบันทึกถูก)
 3. **การ์ดสถิติหน้า public** เดิมแสดง 0 เสมอ (อ่าน JSON ผิดระดับ)
 4. **ขอสิทธิ์ตำแหน่ง** เฉพาะตอนเปิดแท็บแผนที่ และปรับข้อความอธิบายใน `Info.plist`
 5. **กิจกรรมล่าสุด** แสดงชื่อรายการจริง และแปลประเภทมลพิษเป็นไทย
@@ -106,15 +115,20 @@ Location is requested only when opening the map tab (to show the user's position
 
 ## 💻 Technical Details
 
-### Backend (ต้อง deploy ขึ้น Render ด้วย — แอปทำงานได้โดยไม่ต้องรอ แต่ผู้ใช้จะไม่ได้ข้อความ error ใหม่/ที่อยู่ที่เก็บแยก)
+### Backend (ต้อง deploy ขึ้น Render หลังรัน migration และก่อนปล่อยแอป)
 - [`database.js`](api-server/config/database.js) — แปลง error ข้อมูลผิดของ Postgres เป็น 400/409 พร้อมข้อความไทย (เดิมตอบ 500 + ข้อความ SQL ดิบ)
 - [`auth.js`](api-server/routes/auth.js), [`validation.js`](api-server/middleware/validation.js) — `register-community` เก็บ village/sub_district/district/province; ไม่ log รหัสผ่านอีกต่อไป
+- [`pollution.js`](api-server/routes/community/pollution.js) — รับ/ส่ง `expected_impact`; [`mangrove-areas.js`](api-server/routes/admin/mangrove-areas.js) — รับ/ส่ง `contact_person`, `contact_channel` (public API ไม่เปิดเผยสองฟิลด์นี้)
 - routes ใน `admin/` และ `community/` — catch block ใช้ `error.status` แทน 500 ตายตัว
 
 ### Database
-- **โครงสร้างตาราง/คอลัมน์ไม่เปลี่ยน** ไม่มี schema migration
+- ⚠️ **มีการเพิ่มคอลัมน์ 3 ตัว** (เพิ่มอย่างเดียว ไม่แก้/ลบข้อมูลเดิม) ตาม scope document:
+  `mangrove_areas.contact_person`, `mangrove_areas.contact_channel`, `pollution_reports.expected_impact`
+  → รัน [`migration_add_area_contact_and_pollution_impact.sql`](database/migration_add_area_contact_and_pollution_impact.sql) (รันซ้ำได้ ปลอดภัย)
+- **ลำดับการปล่อย: (1) รัน migration นี้ → (2) deploy `api-server` ขึ้น Render → (3) ปล่อยแอป**
+  ถ้า deploy API ก่อน migration การบันทึกรายงานมลพิษ/พื้นที่ป่าจะ error
 - ⚠️ **ต้องพิจารณา data migration ของหน่วยพื้นที่:** [`migration_convert_area_rai_to_hectares.sql`](database/migration_convert_area_rai_to_hectares.sql)
-  เวอร์ชัน ≤ 1.0.11 เก็บค่า "ไร่" ลงคอลัมน์ที่เป็นเฮกตาร์ ถ้าไม่ migrate ข้อมูลเดิมจะแสดงมากกว่าจริง 6.25 เท่าในแอป v1.0.12
+  เวอร์ชัน ≤ 1.0.11 เก็บค่า "ไร่" ลงคอลัมน์ที่เป็นเฮกตาร์ (ตรวจข้อมูล production แล้ว: ต้องแก้เฉพาะ `communities.area_size` ids 1,2,3,6,7; ids 5 และ 10 ต้องตรวจก่อน; `mangrove_areas` ไม่มีค่า) ถ้าไม่ migrate ข้อมูลเดิมจะแสดงมากกว่าจริง 6.25 เท่าในแอป v1.0.12
   → ตรวจข้อมูลจริงก่อน, สำรองข้อมูล, รันครั้งเดียวตอนปล่อยเวอร์ชัน (ผู้ใช้ v1.0.11 จะเห็นค่าเล็กลง 6.25 เท่าจนกว่าจะอัปเดต)
 
 ### Frontend

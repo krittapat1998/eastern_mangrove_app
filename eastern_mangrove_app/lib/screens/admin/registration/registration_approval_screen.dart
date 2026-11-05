@@ -463,7 +463,7 @@ class _RegistrationApprovalScreenState extends State<RegistrationApprovalScreen>
     final String email = community['email'] ?? '-';
     final String? description = community['description'];
     final String? username = community['username'];
-    final String? establishedYear = community['established_year']?.toString();
+    final String? establishedYear = community['established_year'] == null ? null : ThaiDate.yearText(community['established_year']);
     final String? memberCount = community['member_count']?.toString();
     final String createdAt = community['created_at'] != null
         ? ThaiDate.dateTime(DateTime.parse(community['created_at']).toLocal())
@@ -539,7 +539,7 @@ class _RegistrationApprovalScreenState extends State<RegistrationApprovalScreen>
                 _buildSheetSection('ข้อมูลชุมชน', Icons.location_city, [
                   _buildSheetRow(Icons.location_on, 'ที่ตั้ง', location),
                   if (establishedYear != null)
-                    _buildSheetRow(Icons.calendar_today, 'ปีที่ก่อตั้ง', establishedYear),
+                    _buildSheetRow(Icons.calendar_today, 'ปีที่ก่อตั้ง (พ.ศ.)', establishedYear),
                   if (memberCount != null)
                     _buildSheetRow(Icons.group, 'จำนวนสมาชิก', '$memberCount คน'),
                   if (description != null && description.isNotEmpty)

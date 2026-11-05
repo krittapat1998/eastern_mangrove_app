@@ -681,7 +681,7 @@ class _MangroveManagementScreenState extends State<MangroveManagementScreen>
               if (area['mangrove_species'] != null)
                 _buildDetailRow('พันธุ์ไม้', area['mangrove_species'] is List ? (area['mangrove_species'] as List).join(', ') : area['mangrove_species'].toString()),
               if (area['established_year'] != null)
-                _buildDetailRow('ปีที่ก่อตั้ง', area['established_year'].toString()),
+                _buildDetailRow('ปีที่ก่อตั้ง (พ.ศ.)', ThaiDate.yearText(area['established_year'])),
               if (area['managing_organization'] != null)
                 _buildDetailRow('องค์กรดูแล', area['managing_organization']),
               if (area['description'] != null && area['description'].toString().isNotEmpty) ...[

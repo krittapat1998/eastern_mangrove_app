@@ -175,6 +175,8 @@ class _MangroveAreaDialogState extends State<_MangroveAreaDialog> {
   late final TextEditingController organizationController;
   late final TextEditingController threatsController;
   late final TextEditingController activitiesController;
+  late final TextEditingController contactPersonController;
+  late final TextEditingController contactChannelController;
 
   late List<String> filteredProvinces;
   late String selectedProvince;
@@ -194,6 +196,8 @@ class _MangroveAreaDialogState extends State<_MangroveAreaDialog> {
     descriptionController = TextEditingController(text: e?['description'] ?? '');
     yearController = TextEditingController(text: ThaiDate.yearText(e?['established_year']));
     organizationController = TextEditingController(text: e?['managing_organization'] ?? '');
+    contactPersonController = TextEditingController(text: e?['contact_person'] ?? '');
+    contactChannelController = TextEditingController(text: e?['contact_channel'] ?? '');
 
     String speciesText = '';
     if (e?['mangrove_species'] != null) {
@@ -250,6 +254,8 @@ class _MangroveAreaDialogState extends State<_MangroveAreaDialog> {
     organizationController.dispose();
     threatsController.dispose();
     activitiesController.dispose();
+    contactPersonController.dispose();
+    contactChannelController.dispose();
     super.dispose();
   }
 
@@ -356,6 +362,18 @@ class _MangroveAreaDialogState extends State<_MangroveAreaDialog> {
                 TextField(
                   controller: organizationController,
                   decoration: _fieldDecoration('องค์กรดูแล', Icons.business),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: contactPersonController,
+                  decoration: _fieldDecoration('ผู้ติดต่อ', Icons.person,
+                      hint: 'ชื่อผู้ประสานงานของพื้นที่/ชุมชน'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: contactChannelController,
+                  decoration: _fieldDecoration('ช่องทางการติดต่อ', Icons.contact_phone,
+                      hint: 'เบอร์โทร หรือ LINE ID (แสดงเฉพาะผู้ดูแลระบบ)'),
                 ),
 
                 const SizedBox(height: 20),
@@ -570,6 +588,12 @@ class _MangroveAreaDialogState extends State<_MangroveAreaDialog> {
                     threatsController.text.isNotEmpty ? threatsController.text.trim() : null,
                 'conservation_activities': activitiesController.text.isNotEmpty
                     ? activitiesController.text.trim()
+                    : null,
+                'contact_person': contactPersonController.text.trim().isNotEmpty
+                    ? contactPersonController.text.trim()
+                    : null,
+                'contact_channel': contactChannelController.text.trim().isNotEmpty
+                    ? contactChannelController.text.trim()
                     : null,
               };
 

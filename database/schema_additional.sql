@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS mangrove_areas (
     managing_organization VARCHAR(200),
     threats TEXT[],
     conservation_activities TEXT[],
+    contact_person VARCHAR(150),      -- who to contact (admin-only)
+    contact_channel VARCHAR(255),     -- phone / LINE ...
     photos TEXT[],
     monitoring_data JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -93,6 +95,7 @@ CREATE TABLE IF NOT EXISTS pollution_reports (
     pollution_source VARCHAR(255) NOT NULL,
     severity_level VARCHAR(20) NOT NULL CHECK (severity_level IN ('low', 'medium', 'high', 'critical')),
     description TEXT NOT NULL,
+    expected_impact TEXT,             -- how it is likely to affect the mangrove
     latitude DECIMAL(10, 7),
     longitude DECIMAL(10, 7),
     report_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
