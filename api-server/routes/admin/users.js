@@ -76,7 +76,7 @@ router.get('/users', async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching users:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการดึงข้อมูลผู้ใช้งาน'
@@ -149,7 +149,7 @@ router.put('/users/:id/toggle-status', async (req, res) => {
 
   } catch (error) {
     console.error('Error toggling user status:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการเปลี่ยนสถานะผู้ใช้งาน'
@@ -193,7 +193,7 @@ router.get('/actions', async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching admin actions:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการดึงข้อมูล log การทำงาน'
@@ -272,7 +272,7 @@ router.put('/users/:id/reset-password', async (req, res) => {
 
   } catch (error) {
     console.error('Error resetting password:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการรีเซ็ตรหัสผ่าน'

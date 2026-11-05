@@ -157,7 +157,11 @@ router.post('/register-community', validate(schemas.communityRegistration), asyn
       description,
       establishedYear,
       memberCount,
-      photoType
+      photoType,
+      villageName,
+      subDistrict,
+      district,
+      province
     } = req.body;
 
     // Check if community already exists AND has been approved
@@ -238,15 +242,17 @@ router.post('/register-community', validate(schemas.communityRegistration), asyn
         INSERT INTO communities (
           community_name, location, contact_person, phone_number, email,
           description, established_year, member_count, photo_type,
+          village_name, sub_district, district, province,
           registration_status, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', NOW(), NOW())
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'pending', NOW(), NOW())
         RETURNING id, community_name, location, contact_person, phone_number, 
                  email, description, established_year, member_count, photo_type,
                  registration_status, created_at
       `, [
         communityName, location, contactPerson, phoneNumber, email,
-        description, establishedYear, memberCount, photoType
+        description, establishedYear, memberCount, photoType,
+        villageName || null, subDistrict || null, district || null, province || null
       ]);
 
       const newCommunity = communityResult.rows[0];

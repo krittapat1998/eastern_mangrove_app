@@ -94,14 +94,24 @@ const schemas = {
     }),
     photoType: Joi.string().valid('profile', 'community', 'activity', 'mangrove').optional().messages({
       'any.only': 'Photo type must be profile, community, activity, or mangrove'
-    })
+    }),
+    // structured address (the combined text is still sent in `location`)
+    villageName: Joi.string().max(100).allow('').optional(),
+    subDistrict: Joi.string().max(100).allow('').optional(),
+    district: Joi.string().max(100).allow('').optional(),
+    province: Joi.string().max(100).allow('').optional()
   })
 };
 
 // Validation middleware factory
 const validate = (schema) => {
   return (req, res, next) => {
-    console.log('🔍 Validation - Request body:', JSON.stringify(req.body, null, 2));
+    // never log credentials
+    const redacted = { ...req.body };
+    for (const k of Object.keys(redacted)) {
+      if (/password/i.test(k)) redacted[k] = '***';
+    }
+    console.log('🔍 Validation - Request body:', JSON.stringify(redacted, null, 2));
     const { error } = schema.validate(req.body, { abortEarly: false });
     
     if (error) {

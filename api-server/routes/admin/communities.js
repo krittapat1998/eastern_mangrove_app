@@ -26,7 +26,7 @@ router.get('/communities/pending', async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching pending communities:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการดึงข้อมูลคำขอลงทะเบียน'
@@ -98,7 +98,7 @@ router.get('/communities', async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching communities:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการดึงข้อมูลชุมชน'
@@ -183,7 +183,7 @@ router.put('/communities/:id/approve', async (req, res) => {
   } catch (error) {
     await db.query('ROLLBACK');
     console.error('Error approving community:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการอนุมัติคำขอลงทะเบียน'
@@ -272,7 +272,7 @@ router.put('/communities/:id/reject', async (req, res) => {
   } catch (error) {
     await db.query('ROLLBACK');
     console.error('Error rejecting community:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการปฏิเสธคำขอลงทะเบียน'
@@ -318,7 +318,7 @@ router.post('/communities/check-duplicate', async (req, res) => {
     });
   } catch (error) {
     console.error('Error checking duplicate:', error);
-    return res.status(500).json({
+    return res.status(error.status || 500).json({
       success: false,
       error: 'Server error',
       message: 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล'
@@ -469,7 +469,7 @@ router.post('/communities', async (req, res) => {
   } catch (error) {
     await db.query('ROLLBACK');
     console.error('Error creating community:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการสร้างชุมชน'
@@ -637,7 +637,7 @@ router.put('/communities/:id', async (req, res) => {
 
   } catch (error) {
     console.error('Error updating community:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการแก้ไขข้อมูลชุมชน'
@@ -715,7 +715,7 @@ router.put('/communities/:id/toggle-status', async (req, res) => {
 
   } catch (error) {
     console.error('Error toggling community status:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการเปลี่ยนสถานะชุมชน'
@@ -788,7 +788,7 @@ router.delete('/communities/:id', async (req, res) => {
   } catch (error) {
     await db.query('ROLLBACK');
     console.error('Error deleting community:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการลบชุมชน: ' + error.message

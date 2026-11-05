@@ -42,7 +42,7 @@ router.get('/mangrove-areas', async (req, res) => {
     
   } catch (error) {
     console.error('Error getting mangrove areas:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการดึงข้อมูล: ' + error.message
@@ -79,7 +79,7 @@ router.get('/mangrove-areas/:id', async (req, res) => {
     
   } catch (error) {
     console.error('Error getting mangrove area:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการดึงข้อมูล: ' + error.message
@@ -169,7 +169,7 @@ router.post('/mangrove-areas', async (req, res) => {
     
   } catch (error) {
     console.error('Error creating mangrove area:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการเพิ่มพื้นที่: ' + error.message
@@ -262,7 +262,7 @@ router.put('/mangrove-areas/:id', async (req, res) => {
     
   } catch (error) {
     console.error('Error updating mangrove area:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการแก้ไขข้อมูล: ' + error.message
@@ -294,7 +294,7 @@ router.delete('/mangrove-areas/:id', async (req, res) => {
     
   } catch (error) {
     console.error('Error deleting mangrove area:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: 'Database error',
       message: 'เกิดข้อผิดพลาดในการลบพื้นที่: ' + error.message

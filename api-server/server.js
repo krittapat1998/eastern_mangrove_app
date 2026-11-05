@@ -125,8 +125,10 @@ app.use('*', (req, res) => {
 // Error handling middleware
 app.use((error, req, res, next) => {
   console.error('API Error:', error);
-  res.status(error.status || 500).json({
-    error: 'Internal server error',
+  const status = error.status || 500;
+  res.status(status).json({
+    success: false,
+    error: status >= 500 ? 'Internal server error' : 'Bad request',
     message: error.message
   });
 });
