@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../services/api_client.dart';
 import '../../models/models.dart';
 import '../../data/thai_address_data.dart';
@@ -7,15 +8,17 @@ class CommunityRegistrationScreen extends StatefulWidget {
   const CommunityRegistrationScreen({super.key});
 
   @override
-  State<CommunityRegistrationScreen> createState() => _CommunityRegistrationScreenState();
+  State<CommunityRegistrationScreen> createState() =>
+      _CommunityRegistrationScreenState();
 }
 
-class _CommunityRegistrationScreenState extends State<CommunityRegistrationScreen> {
+class _CommunityRegistrationScreenState
+    extends State<CommunityRegistrationScreen> {
   final _apiClient = ApiClient();
   final _formKey = GlobalKey<FormState>();
   final _pageController = PageController();
   int _currentStep = 0;
-  
+
   // Form Controllers
   final _communityNameController = TextEditingController();
   final _villageNameController = TextEditingController();
@@ -39,140 +42,149 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFFAFAFA),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF2E7D32),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      // light page background -> dark status-bar icons
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(color: Color(0xFFFAFAFA)),
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF2E7D32),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
                   ),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.white),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                        const Expanded(
-                          child: Text(
-                            'ลงทะเบียนชุมชนใหม่',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back,
                               color: Colors.white,
                             ),
-                            textAlign: TextAlign.center,
+                            onPressed: () => Navigator.pop(context),
                           ),
-                        ),
-                        const SizedBox(width: 48), // Balance the back button
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Progress Indicator
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: [
-                          for (int i = 0; i < 2; i++) ...[
-                            _buildStepIndicator(i),
-                            if (i < 1) _buildStepConnector(i),
-                          ],
+                          const Expanded(
+                            child: Text(
+                              'ลงทะเบียนชุมชนใหม่',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(width: 48), // Balance the back button
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              // Form Content
-              Expanded(
-                child: Container(
-                  margin: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
+                      const SizedBox(height: 16),
+                      // Progress Indicator
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Row(
+                          children: [
+                            for (int i = 0; i < 2; i++) ...[
+                              _buildStepIndicator(i),
+                              if (i < 1) _buildStepConnector(i),
+                            ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                  child: Form(
-                    key: _formKey,
-                    child: PageView(
-                      controller: _pageController,
-                      onPageChanged: (index) => setState(() => _currentStep = index),
-                      children: [
-                        _buildStep1(), // ข้อมูลชุมชน
-                        _buildStep2(), // ข้อมูลติดต่อและบัญชี
+                ),
+
+                // Form Content
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
                       ],
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      // once a field has been touched, re-validate while typing so a
+                      // corrected value clears its red error immediately
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: PageView(
+                        controller: _pageController,
+                        onPageChanged: (index) =>
+                            setState(() => _currentStep = index),
+                        children: [
+                          _buildStep1(), // ข้อมูลชุมชน
+                          _buildStep2(), // ข้อมูลติดต่อและบัญชี
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              
-              // Navigation Buttons
-              Container(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    if (_currentStep > 0)
+
+                // Navigation Buttons
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      if (_currentStep > 0)
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => _previousStep(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text('ย้อนกลับ'),
+                          ),
+                        ),
+                      if (_currentStep > 0) const SizedBox(width: 16),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () => _previousStep(),
+                          onPressed: _isLoading ? null : () => _nextStep(),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey,
+                            backgroundColor: Colors.orange,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text('ย้อนกลับ'),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(_currentStep == 1 ? 'ส่งคำขอ' : 'ถัดไป'),
                         ),
                       ),
-                    if (_currentStep > 0) const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : () => _nextStep(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Text(_currentStep == 1 ? 'ส่งคำขอ' : 'ถัดไป'),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -193,14 +205,14 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
       ),
       child: Center(
         child: isCompleted
-          ? const Icon(Icons.check, color: Colors.white, size: 16)
-          : Text(
-              '${stepIndex + 1}',
-              style: TextStyle(
-                color: isActive ? Colors.white : Colors.orange,
-                fontWeight: FontWeight.bold,
+            ? const Icon(Icons.check, color: Colors.white, size: 16)
+            : Text(
+                '${stepIndex + 1}',
+                style: TextStyle(
+                  color: isActive ? Colors.white : Colors.orange,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
       ),
     );
   }
@@ -232,13 +244,10 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
           const SizedBox(height: 8),
           const Text(
             'กรุณากรอกข้อมูลพื้นฐานของชุมชน',
-            style: TextStyle(
-              fontSize: 16,
-              color: Color(0xFF757575),
-            ),
+            style: TextStyle(fontSize: 16, color: Color(0xFF757575)),
           ),
           const SizedBox(height: 24),
-          
+
           // Community Name
           TextFormField(
             controller: _communityNameController,
@@ -261,9 +270,9 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
               return null;
             },
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Village Name
           TextFormField(
             controller: _villageNameController,
@@ -286,9 +295,9 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
               return null;
             },
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Province dropdown
           DropdownButtonFormField<String>(
             value: _selectedProvince,
@@ -314,8 +323,7 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
                 _postalCode = '';
               });
             },
-            validator: (value) =>
-                value == null ? 'กรุณาเลือกจังหวัด' : null,
+            validator: (value) => value == null ? 'กรุณาเลือกจังหวัด' : null,
           ),
 
           const SizedBox(height: 20),
@@ -337,8 +345,8 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
             items: _selectedProvince == null
                 ? []
                 : ThaiAddressData.getDistricts(_selectedProvince!)
-                    .map((d) => DropdownMenuItem(value: d, child: Text(d)))
-                    .toList(),
+                      .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+                      .toList(),
             onChanged: _selectedProvince == null
                 ? null
                 : (value) {
@@ -348,8 +356,7 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
                       _postalCode = '';
                     });
                   },
-            validator: (value) =>
-                value == null ? 'กรุณาเลือกอำเภอ' : null,
+            validator: (value) => value == null ? 'กรุณาเลือกอำเภอ' : null,
           ),
 
           const SizedBox(height: 20),
@@ -371,24 +378,30 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
             items: (_selectedProvince == null || _selectedDistrict == null)
                 ? []
                 : ThaiAddressData.getSubDistricts(
-                        _selectedProvince!, _selectedDistrict!)
-                    .map((s) =>
-                        DropdownMenuItem(value: s.name, child: Text(s.name)))
-                    .toList(),
+                        _selectedProvince!,
+                        _selectedDistrict!,
+                      )
+                      .map(
+                        (s) => DropdownMenuItem(
+                          value: s.name,
+                          child: Text(s.name),
+                        ),
+                      )
+                      .toList(),
             onChanged: (_selectedProvince == null || _selectedDistrict == null)
                 ? null
                 : (value) {
                     final subList = ThaiAddressData.getSubDistricts(
-                        _selectedProvince!, _selectedDistrict!);
-                    final selected =
-                        subList.firstWhere((s) => s.name == value);
+                      _selectedProvince!,
+                      _selectedDistrict!,
+                    );
+                    final selected = subList.firstWhere((s) => s.name == value);
                     setState(() {
                       _selectedSubDistrict = value;
                       _postalCode = selected.postalCode;
                     });
                   },
-            validator: (value) =>
-                value == null ? 'กรุณาเลือกตำบล' : null,
+            validator: (value) => value == null ? 'กรุณาเลือกตำบล' : null,
           ),
 
           const SizedBox(height: 20),
@@ -398,7 +411,9 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
             readOnly: true,
             decoration: InputDecoration(
               labelText: 'รหัสไปรษณีย์',
-              hintText: _postalCode.isEmpty ? 'กรอกอัตโนมัติเมื่อเลือกตำบล' : _postalCode,
+              hintText: _postalCode.isEmpty
+                  ? 'กรอกอัตโนมัติเมื่อเลือกตำบล'
+                  : _postalCode,
               prefixIcon: const Icon(Icons.markunread_mailbox),
               filled: true,
               fillColor: Colors.grey.shade100,
@@ -408,9 +423,9 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
             ),
             controller: TextEditingController(text: _postalCode),
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Description
           TextFormField(
             controller: _descriptionController,
@@ -450,13 +465,10 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
           const SizedBox(height: 8),
           const Text(
             'ข้อมูลผู้ติดต่อและสำหรับเข้าสู่ระบบ',
-            style: TextStyle(
-              fontSize: 16,
-              color: Color(0xFF757575),
-            ),
+            style: TextStyle(fontSize: 16, color: Color(0xFF757575)),
           ),
           const SizedBox(height: 24),
-          
+
           // Contact Person
           TextFormField(
             controller: _contactPersonController,
@@ -479,9 +491,9 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
               return null;
             },
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Phone
           TextFormField(
             controller: _phoneController,
@@ -508,9 +520,9 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
               return null;
             },
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Email
           TextFormField(
             controller: _emailController,
@@ -531,29 +543,28 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
               if (value == null || value.isEmpty) {
                 return 'กรุณาป้อนอีเมล';
               }
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+              if (!RegExp(
+                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+              ).hasMatch(value)) {
                 return 'รูปแบบอีเมลไม่ถูกต้อง เช่น example@email.com';
               }
               return null;
             },
           ),
-          
+
           const SizedBox(height: 32),
-          
+
           // Separator
           const Divider(),
           const SizedBox(height: 20),
-          
+
           const Text(
             'ข้อมูลบัญชีผู้ใช้',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Username
           TextFormField(
             controller: _usernameController,
@@ -579,9 +590,9 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
               return null;
             },
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Password
           TextFormField(
             controller: _passwordController,
@@ -591,8 +602,11 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
               hintText: 'อย่างน้อย 8 ตัวอักษร',
               prefixIcon: const Icon(Icons.lock),
               suffixIcon: IconButton(
-                icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                ),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -612,9 +626,9 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
               return null;
             },
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Confirm Password
           TextFormField(
             controller: _confirmPasswordController,
@@ -624,8 +638,14 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
               hintText: 'กรอกรหัสผ่านอีกครั้ง',
               prefixIcon: const Icon(Icons.lock_outline),
               suffixIcon: IconButton(
-                icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
-                onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                icon: Icon(
+                  _obscureConfirmPassword
+                      ? Icons.visibility_off
+                      : Icons.visibility,
+                ),
+                onPressed: () => setState(
+                  () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                ),
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -652,7 +672,7 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
 
   void _nextStep() {
     print('📝 _nextStep called, current step: $_currentStep');
-    
+
     if (_currentStep == 0) {
       // Validate Step 1
       print('📋 Validating Step 1...');
@@ -696,19 +716,28 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
 
   Future<void> _submitRegistration() async {
     print('🚀 _submitRegistration started...');
-    
+
     setState(() {
       _isLoading = true;
     });
 
     try {
       // Build location string from village, subdistrict, district, province
-      final location = [
-        _villageNameController.text.trim(),
-        'ตำบล${_selectedSubDistrict ?? ''}',
-        'อำเภอ${_selectedDistrict ?? ''}',
-        'จังหวัด${_selectedProvince ?? ''}',
-      ].where((s) => s.isNotEmpty && s != 'ตำบล' && s != 'อำเภอ' && s != 'จังหวัด').join(' ');
+      final location =
+          [
+                _villageNameController.text.trim(),
+                'ตำบล${_selectedSubDistrict ?? ''}',
+                'อำเภอ${_selectedDistrict ?? ''}',
+                'จังหวัด${_selectedProvince ?? ''}',
+              ]
+              .where(
+                (s) =>
+                    s.isNotEmpty &&
+                    s != 'ตำบล' &&
+                    s != 'อำเภอ' &&
+                    s != 'จังหวัด',
+              )
+              .join(' ');
 
       print('📍 Location: $location');
       print('🏘️ Community Name: ${_communityNameController.text.trim()}');
@@ -727,17 +756,21 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
         communityName: _communityNameController.text.trim(),
         location: location,
         contactPerson: _contactPersonController.text.trim(),
-        description: _descriptionController.text.trim().isEmpty 
-            ? null 
+        description: _descriptionController.text.trim().isEmpty
+            ? null
             : _descriptionController.text.trim(),
         establishedYear: null, // Can add year field if needed
-        memberCount: null,     // Can add member count field if needed
+        memberCount: null, // Can add member count field if needed
         photoType: null,
+        villageName: _villageNameController.text.trim(),
+        subDistrict: _selectedSubDistrict,
+        district: _selectedDistrict,
+        province: _selectedProvince,
       );
 
       print('📤 Sending request to API...');
       print('📦 Request JSON: ${request.toJson()}');
-      
+
       // Call API
       final response = await _apiClient.registerCommunity(request);
 
@@ -761,16 +794,17 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
             icon: const Icon(Icons.check_circle, color: Colors.green, size: 60),
             title: const Text('ส่งคำขอเรียบร้อย!'),
             content: Text(
-              response.message.isNotEmpty 
-                  ? response.message 
+              response.message.isNotEmpty
+                  ? response.message
                   : 'คำขอลงทะเบียนของคุณได้ถูกส่งไปยังเจ้าหน้าที่แล้ว\n\n'
-                    'คุณจะได้รับการแจ้งเตือนผ่านอีเมลเมื่อได้รับการอนุมัติ'
+                        'คุณจะได้รับการแจ้งเตือนผ่านอีเมลเมื่อได้รับการอนุมัติ',
             ),
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).popUntil((route) => 
-                      route.settings.name == '/' || route.isFirst);
+                  Navigator.of(context).popUntil(
+                    (route) => route.settings.name == '/' || route.isFirst,
+                  );
                 },
                 child: const Text('กลับหน้าแรก'),
               ),
@@ -785,7 +819,8 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
             icon: const Icon(Icons.error_outline, color: Colors.red, size: 60),
             title: const Text('เกิดข้อผิดพลาด'),
             content: Text(
-              response.error ?? 'ไม่สามารถส่งคำขอลงทะเบียนได้ กรุณาลองใหม่อีกครั้ง'
+              response.error ??
+                  'ไม่สามารถส่งคำขอลงทะเบียนได้ กรุณาลองใหม่อีกครั้ง',
             ),
             actions: [
               TextButton(
@@ -798,7 +833,7 @@ class _CommunityRegistrationScreenState extends State<CommunityRegistrationScree
       }
     } catch (e) {
       print('❌ Exception caught: $e');
-      
+
       setState(() {
         _isLoading = false;
       });

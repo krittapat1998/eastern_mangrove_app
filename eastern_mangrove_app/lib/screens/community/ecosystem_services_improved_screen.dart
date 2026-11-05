@@ -1,3 +1,4 @@
+import 'package:eastern_mangrove_app/utils/thai_date.dart';
 import 'package:flutter/material.dart';
 import '../../services/api_client.dart';
 
@@ -505,7 +506,7 @@ class _EcosystemServicesImprovedScreenState extends State<EcosystemServicesImpro
               _buildInfoRow(
                 Icons.calendar_today,
                 'เดือน/ปี',
-                '${_getThaiMonthName(_parseInt(service["month"]))} ${service["year"]}',
+                ThaiDate.monthYear(_parseInt(service["month"]), _parseInt(service["year"])),
               ),
             ],
           ),
@@ -650,7 +651,7 @@ class _EcosystemServicesImprovedScreenState extends State<EcosystemServicesImpro
       text: existingService?['unit_price']?.toString() ?? '',
     );
     final yearController = TextEditingController(
-      text: existingService?['year']?.toString() ?? DateTime.now().year.toString(),
+      text: ThaiDate.yearText(existingService?['year'] ?? DateTime.now().year),
     );
     final monthController = TextEditingController(
       text: existingService?['month']?.toString() ?? DateTime.now().month.toString(),
@@ -865,7 +866,7 @@ class _EcosystemServicesImprovedScreenState extends State<EcosystemServicesImpro
                     'unit': unitController.text.trim(),
                     'unitPrice': double.tryParse(unitPriceController.text) ?? 0.0,
                     'economicValue': calculatedValue,
-                    'year': int.tryParse(yearController.text) ?? DateTime.now().year,
+                    'year': ThaiDate.yearFromInput(yearController.text) ?? DateTime.now().year,
                     'month': int.tryParse(monthController.text) ?? DateTime.now().month,
                     'description': descriptionController.text.trim(),
                   };
@@ -904,7 +905,7 @@ class _EcosystemServicesImprovedScreenState extends State<EcosystemServicesImpro
       text: existingService?['price_per_person']?.toString() ?? '',
     );
     final yearController = TextEditingController(
-      text: existingService?['year']?.toString() ?? DateTime.now().year.toString(),
+      text: ThaiDate.yearText(existingService?['year'] ?? DateTime.now().year),
     );
     final monthController = TextEditingController(
       text: existingService?['month']?.toString() ?? DateTime.now().month.toString(),
@@ -1102,7 +1103,7 @@ class _EcosystemServicesImprovedScreenState extends State<EcosystemServicesImpro
                     'participants': int.tryParse(participantsController.text) ?? 0,
                     'pricePerPerson': double.tryParse(pricePerPersonController.text) ?? 0.0,
                     'economicValue': calculatedValue,
-                    'year': int.tryParse(yearController.text) ?? DateTime.now().year,
+                    'year': ThaiDate.yearFromInput(yearController.text) ?? DateTime.now().year,
                     'month': int.tryParse(monthController.text) ?? DateTime.now().month,
                     'description': descriptionController.text.trim(),
                   };

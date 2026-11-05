@@ -1,3 +1,4 @@
+import 'package:eastern_mangrove_app/utils/thai_date.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -191,7 +192,7 @@ class _MangroveAreaDialogState extends State<_MangroveAreaDialog> {
     locationController = TextEditingController(text: e?['location'] ?? '');
     sizeController = TextEditingController(text: e?['size_hectares']?.toString() ?? '');
     descriptionController = TextEditingController(text: e?['description'] ?? '');
-    yearController = TextEditingController(text: e?['established_year']?.toString() ?? '');
+    yearController = TextEditingController(text: ThaiDate.yearText(e?['established_year']));
     organizationController = TextEditingController(text: e?['managing_organization'] ?? '');
 
     String speciesText = '';
@@ -560,7 +561,7 @@ class _MangroveAreaDialogState extends State<_MangroveAreaDialog> {
                     ? descriptionController.text.trim()
                     : null,
                 'established_year': yearController.text.isNotEmpty
-                    ? int.tryParse(yearController.text)
+                    ? ThaiDate.yearFromInput(yearController.text)
                     : null,
                 'managing_organization': organizationController.text.isNotEmpty
                     ? organizationController.text.trim()

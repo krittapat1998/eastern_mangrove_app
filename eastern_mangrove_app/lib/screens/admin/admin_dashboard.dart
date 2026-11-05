@@ -431,7 +431,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
       MaterialPageRoute(
         builder: (context) => const MangroveManagementScreen(),
       ),
-    );
+    ).then((_) {
+      // counts (pending approvals, communities, areas) may have changed
+      if (mounted) _loadDashboardStats();
+    });
   }
 
   void _navigateToCommunityAccounts() {
@@ -440,7 +443,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
       MaterialPageRoute(
         builder: (context) => const CommunityAccountsScreen(),
       ),
-    );
+    ).then((_) {
+      // counts (pending approvals, communities, areas) may have changed
+      if (mounted) _loadDashboardStats();
+    });
   }
 
   void _navigateToRegistrationApproval() {
@@ -449,7 +455,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
       MaterialPageRoute(
         builder: (context) => const RegistrationApprovalScreen(),
       ),
-    );
+    ).then((_) {
+      // counts (pending approvals, communities, areas) may have changed
+      if (mounted) _loadDashboardStats();
+    });
   }
 
   void _logout() {

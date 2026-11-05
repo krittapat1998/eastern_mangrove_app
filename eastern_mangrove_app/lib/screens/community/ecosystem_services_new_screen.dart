@@ -1,3 +1,4 @@
+import 'package:eastern_mangrove_app/utils/thai_date.dart';
 import 'package:flutter/material.dart';
 import '../../services/api_client.dart';
 
@@ -551,7 +552,7 @@ class _EcosystemServicesNewScreenState extends State<EcosystemServicesNewScreen>
       text: existingService?['economic_value']?.toString() ?? '',
     );
     final yearController = TextEditingController(
-      text: existingService?['year']?.toString() ?? DateTime.now().year.toString(),
+      text: ThaiDate.yearText(existingService?['year'] ?? DateTime.now().year),
     );
     final monthController = TextEditingController(
       text: existingService?['month']?.toString() ?? DateTime.now().month.toString(),
@@ -701,7 +702,7 @@ class _EcosystemServicesNewScreenState extends State<EcosystemServicesNewScreen>
                   'quantity': double.tryParse(quantityController.text) ?? 0.0,
                   'unit': unitController.text,
                   'economicValue': double.tryParse(valueController.text) ?? 0.0,
-                  'year': int.tryParse(yearController.text) ?? DateTime.now().year,
+                  'year': ThaiDate.yearFromInput(yearController.text) ?? DateTime.now().year,
                   'month': int.tryParse(monthController.text) ?? DateTime.now().month,
                   'description': descriptionController.text,
                   'beneficiariesCount': int.tryParse(beneficiariesController.text) ?? 0,

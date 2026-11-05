@@ -31,6 +31,7 @@ class _PublicDashboardState extends State<PublicDashboard>
   // Tab 2 map filter & GPS
   String _selectedMapFilter = 'ทั้งหมด';
   Position? _currentPosition;
+  bool _locationRequested = false;
 
   // Tab 3 expanded months
   final Set<String> _expandedMonths = {};
@@ -51,7 +52,14 @@ class _PublicDashboardState extends State<PublicDashboard>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _loadAllData();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadCurrentLocation());
+    // Location is only used for the "you are here" dot on the map tab, so ask
+    // for permission the first time the user opens that tab – not at app launch.
+    _tabController.addListener(() {
+      if (_tabController.index == 1 && !_locationRequested) {
+        _locationRequested = true;
+        _loadCurrentLocation();
+      }
+    });
   }
 
   @override

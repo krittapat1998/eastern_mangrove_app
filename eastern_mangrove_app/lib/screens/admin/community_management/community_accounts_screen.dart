@@ -1,3 +1,4 @@
+import 'package:eastern_mangrove_app/utils/thai_date.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../services/api_client.dart';
@@ -746,7 +747,7 @@ class _CommunityAccountsScreenState extends State<CommunityAccountsScreen> {
     if (dateStr == null) return '';
     try {
       final date = DateTime.parse(dateStr);
-      return DateFormat('dd/MM/yyyy HH:mm').format(date);
+      return ThaiDate.dateTime(date.toLocal());
     } catch (e) {
       return dateStr;
     }

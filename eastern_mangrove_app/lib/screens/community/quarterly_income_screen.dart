@@ -1,3 +1,4 @@
+import 'package:eastern_mangrove_app/utils/thai_date.dart';
 import 'package:flutter/material.dart';
 import '../../services/api_client.dart';
 import '../../models/models.dart';
@@ -269,7 +270,7 @@ class _QuarterlyIncomeScreenState extends State<QuarterlyIncomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'ไตรมาส $quarter/$year',
+                    'ไตรมาส $quarter/${ThaiDate.yearText(year)}',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -370,7 +371,7 @@ class _QuarterlyIncomeScreenState extends State<QuarterlyIncomeScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('รายละเอียดรายได้ Q${data['quarter']}/${data['year']}'),
+        title: Text('รายละเอียดรายได้ Q${data['quarter']}/${ThaiDate.yearText(data['year'])}'),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,7 +448,7 @@ class _QuarterlyIncomeScreenState extends State<QuarterlyIncomeScreen> {
 
   void _showIncomeFormDialog(Map<String, dynamic>? existingData) {
     final yearController = TextEditingController(
-      text: existingData?['year']?.toString() ?? DateTime.now().year.toString(),
+      text: ThaiDate.yearText(existingData?['year'] ?? DateTime.now().year),
     );
     final quarterController = TextEditingController(
       text: existingData?['quarter']?.toString() ?? '1',
@@ -484,13 +485,13 @@ class _QuarterlyIncomeScreenState extends State<QuarterlyIncomeScreen> {
     // Get existing quarters for validation
     String _getExistingQuarters() {
       if (_economicData.isEmpty) return 'ยังไม่มีข้อมูล';
-      final quarters = _economicData.map((d) => 'Q${d['quarter']}/${d['year']}').toList();
+      final quarters = _economicData.map((d) => 'Q${d['quarter']}/${ThaiDate.yearText(d['year'])}').toList();
       return quarters.join(', ');
     }
 
     bool _isDuplicate(String year, String quarter) {
       if (existingData != null) return false; // Allow editing same quarter
-      final y = int.tryParse(year) ?? 0;
+      final y = ThaiDate.yearFromInput(year) ?? 0;
       final q = int.tryParse(quarter) ?? 0;
       return _economicData.any((d) => d['year'] == y && d['quarter'] == q);
     }
@@ -652,7 +653,7 @@ class _QuarterlyIncomeScreenState extends State<QuarterlyIncomeScreen> {
               ? null 
               : () async {
               final dataMap = {
-                'year': int.tryParse(yearController.text) ?? DateTime.now().year,
+                'year': ThaiDate.yearFromInput(yearController.text) ?? DateTime.now().year,
                 'quarter': int.tryParse(quarterController.text) ?? 1,
                 'incomeFishery': double.tryParse(fisheryController.text) ?? 0.0,
                 'incomeTourism': double.tryParse(tourismController.text) ?? 0.0,

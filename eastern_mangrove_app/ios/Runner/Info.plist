@@ -44,9 +44,9 @@
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>แอปต้องการเข้าถึง Local Network เพื่อเชื่อมต่อกับ API Server สำหรับจัดการข้อมูลชุมชนและรายงานมลพิษ</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>แอปต้องการเข้าถึงตำแหน่งของคุณเพื่อระบุตำแหน่งมลพิษที่รายงาน</string>
+	<string>แอปใช้ตำแหน่งของคุณเพื่อแสดงจุดที่คุณอยู่บนแผนที่ และเพื่อระบุตำแหน่งมลพิษที่ชุมชนรายงาน</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>แอปต้องการเข้าถึงตำแหน่งของคุณเพื่อระบุตำแหน่งมลพิษที่รายงาน</string>
+	<string>แอปใช้ตำแหน่งของคุณเพื่อแสดงจุดที่คุณอยู่บนแผนที่ และเพื่อระบุตำแหน่งมลพิษที่ชุมชนรายงาน</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>แอปต้องการบันทึกรูปภาพลงในคลังรูปภาพของคุณ</string>
 	<key>NSPhotoLibraryUsageDescription</key>

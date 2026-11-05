@@ -125,7 +125,7 @@ class _CommunityDashboardState extends State<CommunityDashboard> {
                   'icon': Icons.report_problem,
                   'color': Colors.red,
                   'title': 'รายงานมลพิษใหม่',
-                  'description': 'มีรายงานมลพิษ ${report['report_type'] ?? 'ทั่วไป'}',
+                  'description': 'รายงานมลพิษ: ${_pollutionTypeThai(report['report_type']?.toString())}',
                   'time': _formatTimestamp(createdAt),
                   'timestamp': timestamp,
                 });
@@ -157,7 +157,7 @@ class _CommunityDashboardState extends State<CommunityDashboard> {
                   'icon': Icons.eco,
                   'color': Colors.green,
                   'title': 'บริการนิเวศ',
-                  'description': 'บริการนิเวศ ${service['service_name'] ?? service['service_type'] ?? 'ทั่วไป'}',
+                  'description': 'บริการนิเวศ: ${service['service_name'] ?? service['service_type'] ?? 'ทั่วไป'}',
                   'time': _formatTimestamp(createdAt),
                   'timestamp': timestamp,
                 });
@@ -195,6 +195,22 @@ class _CommunityDashboardState extends State<CommunityDashboard> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  // API stores pollution types in English; show them in Thai like the rest of the app.
+  String _pollutionTypeThai(String? type) {
+    switch (type) {
+      case 'Water Pollution':
+        return 'มลพิษทางน้ำ';
+      case 'Air Pollution':
+        return 'มลพิษทางอากาศ';
+      case 'Community Waste':
+        return 'ขยะชุมชน';
+      case 'Industrial Waste':
+        return 'ขยะอุตสาหกรรม';
+      default:
+        return type ?? 'ทั่วไป';
     }
   }
 
@@ -627,7 +643,7 @@ class _CommunityDashboardState extends State<CommunityDashboard> {
                   else
                     ..._recentActivities.map((activity) {
                       return _buildActivityItem(
-                        activity['title'] ?? 'กิจกรรม',
+                        activity['description'] ?? activity['title'] ?? 'กิจกรรม',
                         activity['time'] ?? 'ไม่ทราบเวลา',
                         activity['icon'] ?? Icons.info,
                         activity['color'] ?? Colors.grey,

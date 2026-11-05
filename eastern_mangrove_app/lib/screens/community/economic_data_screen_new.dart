@@ -657,6 +657,12 @@ class _EconomicDataScreenNewState extends State<EconomicDataScreenNew> {
     List<String> items,
     Function(String?) onChanged,
   ) {
+    // A saved value that is not one of the standard options (e.g. typed by an
+    // older app version or created via the API) must still be shown; otherwise
+    // DropdownButton asserts "exactly one item with value" and the screen crashes.
+    if (value.isNotEmpty && !items.contains(value)) {
+      items = [...items, value];
+    }
     return DropdownButtonFormField<String>(
       value: value.isEmpty ? null : value,
       decoration: InputDecoration(
@@ -680,7 +686,11 @@ class _EconomicDataScreenNewState extends State<EconomicDataScreenNew> {
   }
 
   Widget _buildMultiSelectField() {
-    final occupations = ['ประมง', 'เกษตรกรรม', 'ท่องเที่ยว', 'ค้าขาย', 'รับจ้าง', 'อื่นๆ'];
+    final occupations = [
+      'ประมง', 'เกษตรกรรม', 'ท่องเที่ยว', 'ค้าขาย', 'รับจ้าง', 'อื่นๆ',
+      // keep any previously saved custom values selectable so saving doesn't drop them
+      ..._selectedOccupations.where((o) => !['ประมง', 'เกษตรกรรม', 'ท่องเที่ยว', 'ค้าขาย', 'รับจ้าง', 'อื่นๆ'].contains(o)),
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

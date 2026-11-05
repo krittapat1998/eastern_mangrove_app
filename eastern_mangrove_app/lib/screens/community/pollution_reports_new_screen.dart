@@ -1,3 +1,4 @@
+import 'package:eastern_mangrove_app/utils/thai_date.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -83,7 +84,7 @@ class _PollutionReportsNewScreenState extends State<PollutionReportsNewScreen>
 
   Future<void> _loadCurrentLocation() async {
     try {
-      final hasPermission = await _requestLocationPermission();
+      final hasPermission = await _requestLocationPermission(silent: true);
       if (!hasPermission) {
         print('⚠️ Location permission not granted');
         return;
@@ -976,14 +977,17 @@ class _PollutionReportsNewScreenState extends State<PollutionReportsNewScreen>
   }
 
   // Request location permission
-  Future<bool> _requestLocationPermission() async {
+  // [silent]: automatic background attempt (e.g. when the screen opens) – don't
+  // show error snackbars; they are only for when the user explicitly asks for
+  // their location (the "my location" / "use current location" buttons).
+  Future<bool> _requestLocationPermission({bool silent = false}) async {
     bool serviceEnabled;
     LocationPermission permission;
 
     // Check if location services are enabled
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      if (mounted) {
+      if (mounted && !silent) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('กรุณาเปิดบริการตำแหน่ง (GPS) ในการตั้งค่า'),
@@ -999,7 +1003,7 @@ class _PollutionReportsNewScreenState extends State<PollutionReportsNewScreen>
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        if (mounted) {
+        if (mounted && !silent) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('ต้องการสิทธิ์การเข้าถึงตำแหน่งเพื่อระบุตำแหน่งมลพิษ'),
@@ -1012,7 +1016,7 @@ class _PollutionReportsNewScreenState extends State<PollutionReportsNewScreen>
     }
 
     if (permission == LocationPermission.deniedForever) {
-      if (mounted) {
+      if (mounted && !silent) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('สิทธิ์การเข้าถึงตำแหน่งถูกปิดอย่างถาวร กรุณาเปิดในการตั้งค่า'),
@@ -2236,7 +2240,7 @@ class _PollutionReportsNewScreenState extends State<PollutionReportsNewScreen>
                       if (report['report_date'] != null) {
                         try {
                           final date = DateTime.parse(report['report_date']);
-                          dateStr = '${date.day}/${date.month}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+                          dateStr = '${date.day}/${date.month}/${ThaiDate.toBe(date.year)} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
                         } catch (e) {
                           dateStr = report['report_date'];
                         }

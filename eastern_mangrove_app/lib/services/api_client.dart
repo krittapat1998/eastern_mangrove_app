@@ -4,11 +4,66 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 
+
+/// The database stores areas in hectares (`size_hectares`, `communities.area_size`)
+/// but the app shows and asks for Thai "ไร่" (1 hectare = 6.25 rai). All conversion
+/// happens here, at the API boundary, so screens only ever see/enter ไร่.
+class AreaUnit {
+  static const double raiPerHectare = 6.25;
+
+  static double _round2(double v) => (v * 100).round() / 100;
+
+  /// hectares (API) -> rai (UI). Accepts num / numeric string; returns null for null/empty.
+  static double? haToRai(dynamic ha) {
+    final v = ha is num ? ha.toDouble() : double.tryParse(ha?.toString() ?? '');
+    return v == null ? null : _round2(v * raiPerHectare);
+  }
+
+  /// rai (UI) -> hectares (API).
+  static double? raiToHa(dynamic rai) {
+    final v = rai is num ? rai.toDouble() : double.tryParse(rai?.toString() ?? '');
+    return v == null ? null : _round2(v / raiPerHectare);
+  }
+
+  static Map<String, dynamic> areaFromApi(Map<String, dynamic> m) {
+    if (m.containsKey('size_hectares')) {
+      m = {...m, 'size_hectares': haToRai(m['size_hectares'])};
+    }
+    return m;
+  }
+
+  static Map<String, dynamic> areaToApi(Map<String, dynamic> m) {
+    if (m.containsKey('size_hectares')) {
+      m = {...m, 'size_hectares': raiToHa(m['size_hectares'])};
+    }
+    return m;
+  }
+
+  static Map<String, dynamic> communityFromApi(Map<String, dynamic> m) {
+    if (m.containsKey('areaSize')) {
+      m = {...m, 'areaSize': haToRai(m['areaSize'])};
+    }
+    return m;
+  }
+
+  static Map<String, dynamic> communityToApi(Map<String, dynamic> m) {
+    if (m.containsKey('areaSize') && m['areaSize'] != null) {
+      m = {...m, 'areaSize': raiToHa(m['areaSize'])};
+    }
+    return m;
+  }
+}
+
 class ApiClient {
   static const String _productionUrl = 'https://eastern-mangrove-app.onrender.com/api';
 
+  // Optional override for local testing, e.g.
+  //   flutter run --dart-define=API_BASE_URL=http://127.0.0.1:3002/api
+  // Defaults to production when not provided.
+  static const String _overrideUrl = String.fromEnvironment('API_BASE_URL');
+
   static String get baseUrl {
-    return _productionUrl;
+    return _overrideUrl.isNotEmpty ? _overrideUrl : _productionUrl;
   }
   
   String? _token;
@@ -80,6 +135,14 @@ class ApiClient {
     } catch (e) {
       return ApiResponse.error('Failed to parse response: $e');
     }
+  }
+
+  Map<String, dynamic> _convertProfileArea(Map<String, dynamic> profile) {
+    final c = profile['community'];
+    if (c is Map<String, dynamic>) {
+      return {...profile, 'community': AreaUnit.communityFromApi(c)};
+    }
+    return AreaUnit.communityFromApi(profile);
   }
 
   // Handle HTTP errors
@@ -305,7 +368,11 @@ class ApiClient {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return ApiResponse.success(data['data'], data['message'] ?? 'Profile fetched');
+        final profile = data['data'];
+        return ApiResponse.success(
+          profile is Map<String, dynamic> ? _convertProfileArea(profile) : profile,
+          data['message'] ?? 'Profile fetched',
+        );
       } else {
         final data = json.decode(response.body);
         return ApiResponse.error(data['message'] ?? 'Failed to fetch profile');
@@ -411,7 +478,7 @@ class ApiClient {
       final response = await http.put(
         Uri.parse('$baseUrl/community/profile'),
         headers: _headers,
-        body: json.encode(profileData),
+        body: json.encode(AreaUnit.communityToApi(profileData)),
       );
 
       print('🌐 updateCommunityProfile status: ${response.statusCode}');
@@ -419,7 +486,11 @@ class ApiClient {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return ApiResponse.success(data['data'], data['message'] ?? 'Profile updated');
+        final updated = data['data'];
+        return ApiResponse.success(
+          updated is Map<String, dynamic> ? _convertProfileArea(updated) : updated,
+          data['message'] ?? 'Profile updated',
+        );
       } else {
         final data = json.decode(response.body);
         final msg = (data['message']?.toString().isNotEmpty == true)
@@ -919,7 +990,23 @@ class ApiClient {
         headers: {'Content-Type': 'application/json'},
       );
 
-      return _handleResponse(response, (data) => data);
+      // API wraps the payload as { success, message, data: {...} }; the
+      // dashboard reads mangroveAreas/communities/ecosystemServices directly.
+      return _handleResponse(
+        response,
+        (data) {
+          final stats = Map<String, dynamic>.from((data['data'] as Map<String, dynamic>?) ?? {});
+          final areas = stats['mangroveAreas'];
+          if (areas is Map && areas['totalHectares'] != null) {
+            // hectares -> rai (the dashboard card is labelled ไร่)
+            stats['mangroveAreas'] = <String, dynamic>{
+              ...Map<String, dynamic>.from(areas),
+              'totalHectares': AreaUnit.haToRai(areas['totalHectares']),
+            };
+          }
+          return stats;
+        },
+      );
     } catch (e) {
       return _handleError(e);
     }
@@ -936,7 +1023,7 @@ class ApiClient {
         final data = json.decode(response.body);
         final List<dynamic> areasList = data['data'];
         return ApiResponse.success(
-          List<Map<String, dynamic>>.from(areasList),
+          areasList.map((a) => AreaUnit.areaFromApi(Map<String, dynamic>.from(a as Map))).toList(),
           data['message'] ?? 'Success'
         );
       } else {
@@ -1328,7 +1415,7 @@ class ApiClient {
         final List<dynamic> areasList = data['data'];
         
         return ApiResponse.success(
-          areasList.map((area) => area as Map<String, dynamic>).toList(),
+          areasList.map((area) => AreaUnit.areaFromApi(area as Map<String, dynamic>)).toList(),
           data['message'] ?? 'Success'
         );
       } else {
@@ -1350,7 +1437,7 @@ class ApiClient {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return ApiResponse.success(data['data'], data['message'] ?? 'Success');
+        return ApiResponse.success(AreaUnit.areaFromApi(data['data'] as Map<String, dynamic>), data['message'] ?? 'Success');
       } else {
         final data = json.decode(response.body);
         return ApiResponse.error(data['message'] ?? 'Failed to fetch mangrove area');
@@ -1366,12 +1453,12 @@ class ApiClient {
       final response = await http.post(
         Uri.parse('$baseUrl/admin/mangrove-areas'),
         headers: _headers,
-        body: json.encode(areaMap),
+        body: json.encode(AreaUnit.areaToApi(areaMap)),
       );
 
       if (response.statusCode == 201) {
         final data = json.decode(response.body);
-        return ApiResponse.success(data['data'], data['message'] ?? 'Mangrove area created');
+        return ApiResponse.success(AreaUnit.areaFromApi(data['data'] as Map<String, dynamic>), data['message'] ?? 'Mangrove area created');
       } else {
         final data = json.decode(response.body);
         return ApiResponse.error(data['message'] ?? 'Failed to create mangrove area');
@@ -1387,12 +1474,12 @@ class ApiClient {
       final response = await http.put(
         Uri.parse('$baseUrl/admin/mangrove-areas/$id'),
         headers: _headers,
-        body: json.encode(areaMap),
+        body: json.encode(AreaUnit.areaToApi(areaMap)),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return ApiResponse.success(data['data'], data['message'] ?? 'Mangrove area updated');
+        return ApiResponse.success(AreaUnit.areaFromApi(data['data'] as Map<String, dynamic>), data['message'] ?? 'Mangrove area updated');
       } else {
         final data = json.decode(response.body);
         return ApiResponse.error(data['message'] ?? 'Failed to update mangrove area');

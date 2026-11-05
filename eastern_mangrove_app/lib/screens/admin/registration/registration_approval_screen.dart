@@ -1,3 +1,4 @@
+import 'package:eastern_mangrove_app/utils/thai_date.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../services/api_client.dart';
@@ -302,7 +303,7 @@ class _RegistrationApprovalScreenState extends State<RegistrationApprovalScreen>
     final String email = community['email'] ?? '-';
     final String? description = community['description'];
     final String createdAt = community['created_at'] != null
-        ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(community['created_at']))
+        ? ThaiDate.dateTime(DateTime.parse(community['created_at']).toLocal())
         : '-';
 
     return Card(
@@ -465,7 +466,7 @@ class _RegistrationApprovalScreenState extends State<RegistrationApprovalScreen>
     final String? establishedYear = community['established_year']?.toString();
     final String? memberCount = community['member_count']?.toString();
     final String createdAt = community['created_at'] != null
-        ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(community['created_at']))
+        ? ThaiDate.dateTime(DateTime.parse(community['created_at']).toLocal())
         : '-';
 
     showModalBottomSheet(

@@ -1,3 +1,4 @@
+import 'package:eastern_mangrove_app/utils/thai_date.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -843,7 +844,7 @@ class _MangroveManagementScreenState extends State<MangroveManagementScreen>
     final speciesController = TextEditingController(text: speciesText);
     
     final descriptionController = TextEditingController(text: existingArea?['description'] ?? '');
-    final yearController = TextEditingController(text: existingArea?['established_year']?.toString() ?? '');
+    final yearController = TextEditingController(text: ThaiDate.yearText(existingArea?['established_year']));
     final organizationController = TextEditingController(text: existingArea?['managing_organization'] ?? '');
     
     // Handle threats - convert array to comma-separated string
@@ -1010,7 +1011,7 @@ class _MangroveManagementScreenState extends State<MangroveManagementScreen>
                         child: TextField(
                           controller: yearController,
                           decoration: const InputDecoration(
-                            labelText: 'ปีที่ก่อตั้ง',
+                            labelText: 'ปีที่ก่อตั้ง (พ.ศ.)',
                             border: OutlineInputBorder(),
                             prefixIcon: Icon(Icons.calendar_today),
                           ),
@@ -1224,7 +1225,7 @@ class _MangroveManagementScreenState extends State<MangroveManagementScreen>
                   'latitude': selectedLat,
                   'longitude': selectedLon,
                   'description': descriptionController.text.isNotEmpty ? descriptionController.text : null,
-                  'established_year': yearController.text.isNotEmpty ? int.tryParse(yearController.text) : null,
+                  'established_year': yearController.text.isNotEmpty ? ThaiDate.yearFromInput(yearController.text) : null,
                   'managing_organization': organizationController.text.isNotEmpty ? organizationController.text : null,
                   'threats': threatsController.text.isNotEmpty ? threatsController.text : null,
                   'conservation_activities': activitiesController.text.isNotEmpty ? activitiesController.text : null,

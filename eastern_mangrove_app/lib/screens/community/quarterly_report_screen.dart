@@ -1,3 +1,4 @@
+import 'package:eastern_mangrove_app/utils/thai_date.dart';
 import 'package:flutter/material.dart';
 import '../../services/api_client.dart';
 
@@ -219,7 +220,7 @@ class _QuarterlyReportScreenState extends State<QuarterlyReportScreen> with Sing
               items: _availableYears.map((year) {
                 return DropdownMenuItem<int>(
                   value: year,
-                  child: Text('ปี $year', style: const TextStyle(color: Colors.white)),
+                  child: Text('ปี ${ThaiDate.toBe(year)}', style: const TextStyle(color: Colors.white)),
                 );
               }).toList(),
               onChanged: (int? newYear) {

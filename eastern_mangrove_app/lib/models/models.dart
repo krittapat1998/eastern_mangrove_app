@@ -248,6 +248,10 @@ class CommunityRegistrationRequest {
   final int? establishedYear;
   final int? memberCount;
   final String? photoType;
+  final String? villageName;
+  final String? subDistrict;
+  final String? district;
+  final String? province;
 
   CommunityRegistrationRequest({
     required this.username,
@@ -261,6 +265,10 @@ class CommunityRegistrationRequest {
     this.establishedYear,
     this.memberCount,
     this.photoType,
+    this.villageName,
+    this.subDistrict,
+    this.district,
+    this.province,
   });
 
   Map<String, dynamic> toJson() {
@@ -287,7 +295,15 @@ class CommunityRegistrationRequest {
     if (photoType != null && photoType!.isNotEmpty) {
       map['photoType'] = photoType;
     }
-    
+    for (final e in {
+      'villageName': villageName,
+      'subDistrict': subDistrict,
+      'district': district,
+      'province': province,
+    }.entries) {
+      if (e.value != null && e.value!.isNotEmpty) map[e.key] = e.value;
+    }
+
     return map;
   }
 }
