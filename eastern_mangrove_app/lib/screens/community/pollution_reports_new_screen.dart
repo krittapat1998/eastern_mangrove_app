@@ -295,7 +295,7 @@ class _PollutionReportsNewScreenState extends State<PollutionReportsNewScreen>
 
   Widget _buildSummaryAndFilter() {
     final highSeverity = _filteredReports.where((r) => r['severity_level'] == 'high' || r['severity_level'] == 'critical').length;
-    final pending = _filteredReports.where((r) => r['status'] == 'reported' || r['status'] == 'investigating').length;
+    final pending = _filteredReports.where((r) => r['status'] == 'pending' || r['status'] == 'reported' || r['status'] == 'investigating').length;
 
     return Container(
       color: Colors.white,
