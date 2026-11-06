@@ -30,3 +30,7 @@ api-server/*.log
 # Database
 *.db
 *.sqlite
+database/database_backup
+database/*.dump
+database/*.backup
+*.dump
