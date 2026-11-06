@@ -7,6 +7,7 @@ from raw simulator captures. Uses only the Python stdlib + headless Google Chrom
 Usage:
   python3 docs/imageApp/tools/make_store_screenshots.py            # iPhone 6.9" (1320x2868)
   python3 docs/imageApp/tools/make_store_screenshots.py --ipad     # iPad 13"   (2064x2752)
+  python3 docs/imageApp/tools/make_store_screenshots.py --android  # Google Play phone (1320x2600, 8 slides)
   ... [raw_name ...]  to render only some slides
 
 Input : docs/imageApp/raw_ios_6_9/<name>.png  | raw_ipad_13/<name>.png  (raw simulator screenshots)
@@ -23,6 +24,9 @@ RAW = ROOT / "docs/imageApp/raw_ios_6_9"
 OUT = ROOT / "docs/imageApp/ios_6_9_new"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 IPAD = "--ipad" in sys.argv
+ANDROID = "--android" in sys.argv
+if ANDROID:
+    sys.argv.remove("--android")
 if IPAD:
     sys.argv.remove("--ipad")
     RAW = ROOT / "docs/imageApp/raw_ipad_13"
@@ -33,6 +37,13 @@ if IPAD:
 else:
     W, H = 1320, 2868
     Z, PW, PT, BZ, RO, RI = 1.0, 1096, 750, 24, 150, 126
+    if ANDROID:
+        # Google Play phone screenshots: 1320x2600 (<= 2:1), max 8 images
+        H = 2600
+        RAW = ROOT / "docs/imageApp/raw_android"   # real Android emulator captures (1080x2400)
+        RO, RI = 96, 72   # Android status bar sits at the far left: keep the screen corners tight so the clock is not clipped
+        OUT = ROOT / "docs/imageApp/android_new"
+ANDROID_SLIDES = ["p0_welcome", "p2_map", "p1_areas", "c1_dashboard", "c3_services", "c5_pollution_list", "c6_pollution_map", "a1_dashboard"]
 IPAD_SLIDES = {"p0_welcome", "p2_map", "p3_summary", "p1_areas", "c1_dashboard", "c3_services", "c4_quarterly", "c5_pollution_list", "c6_pollution_map"}
 
 # (raw file, role chip, role colour, headline (use <em> for the highlighted words), sub-headline)
@@ -111,6 +122,8 @@ def main():
                 continue
             if IPAD and name not in IPAD_SLIDES:
                 continue
+            if ANDROID and name not in ANDROID_SLIDES:
+                continue
             pw, bz = PW, BZ
             html = HTML % dict(
                 W=W, H=H, accent=accent, chip=chip, headline=headline, sub=sub,
@@ -120,7 +133,8 @@ def main():
             )
             page = pathlib.Path(tmp) / f"{name}.html"
             page.write_text(html, encoding="utf-8")
-            out = OUT / f"{i:02d}_{name}.png"
+            n = ANDROID_SLIDES.index(name) + 1 if ANDROID else i
+            out = OUT / f"{n:02d}_{name}.png"
             subprocess.run([
                 CHROME, "--headless=new", "--disable-gpu", "--hide-scrollbars",
                 "--force-device-scale-factor=1", f"--window-size={W},{H}",
